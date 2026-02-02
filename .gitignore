@@ -1,1 +1,4 @@
 *.kmd
+vivado.jou
+vivado.log
+.Xil
