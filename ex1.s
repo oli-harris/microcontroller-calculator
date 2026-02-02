@@ -68,7 +68,7 @@ start:
                 li a0, 1000
                 call delay_loop
 
-                call start
+                j start
 
 
 ; load_both
