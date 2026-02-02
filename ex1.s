@@ -6,22 +6,64 @@ GREEN           EQU 0b0100
 BLUE            EQU 0b1000 
 
 BASE_ADDRESS    EQU 0x0001_0000
-LOOPS_PER_MS    EQU 10000  ; 40MHz with 4 cycles per loop
+LOOPS_PER_MS    EQU 40_000_000 / 1000 / 4  ; assuming 4 cycles per loop
 
                 li t0, BASE_ADDRESS ; base address always stored at t0
 
 start:
-    li a0, RAINBOW
-    li a1, BLUE
+    ; State 0
+    li a0, RED
+    li a1, RED
     call load_both
-    
     li a0, 1000
     call delay_loop
 
-    li a0, RED
-    li a1, RAINBOW
+    ; State 1
+    li a0, RED_AMBER
+    li a1, RED
     call load_both
-    
+    li a0, 1000
+    call delay_loop
+
+    ; State 2
+    li a0, GREEN
+    li a1, RED
+    call load_both
+    li a0, 3000
+    call delay_loop
+
+    ; State 3
+    li a0, AMBER
+    li a1, RED
+    call load_both
+    li a0, 1000
+    call delay_loop
+
+    ; State 4
+    li a0, RED
+    li a1, RED
+    call load_both
+    li a0, 1000
+    call delay_loop
+
+    ; State 5
+    li a0, RED
+    li a1, RED_AMBER
+    call load_both
+    li a0, 1000
+    call delay_loop
+
+    ; State 6
+    li a0, RED
+    li a1, GREEN
+    call load_both
+    li a0, 3000
+    call delay_loop
+
+    ; State 7
+    li a0, RED
+    li a1, AMBER
+    call load_both
     li a0, 1000
     call delay_loop
     
