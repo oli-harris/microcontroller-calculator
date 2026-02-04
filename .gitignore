@@ -1,4 +1,3 @@
 *.kmd
-vivado.jou
-vivado.log
+vivado*
 .Xil
