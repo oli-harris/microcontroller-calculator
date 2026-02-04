@@ -1,3 +1,17 @@
+;--------------------------------------------------
+;               Traffic Lights Program
+;               Oliver Harris
+;
+; This programme emulates a set of traffic lights
+; using the on-board LEDS.
+;
+; Last modified: 04/01/26
+;
+;--------------------------------------------------
+
+
+
+
 RAINBOW         EQU 0b1111
 RED             EQU 0b0001
 RED_AMBER       EQU 0b0011
