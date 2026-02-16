@@ -6,8 +6,7 @@
 ;
 ; Last modified: 16/02/26
 ;
-; Known issues: cannot run at full speed,
-;               terminal not cleared
+; Known issues: doesnt clear display
 ;
 ;-----------------------------------------------
 
