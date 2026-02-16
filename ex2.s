@@ -1,6 +1,44 @@
-LCD_ADDRESS    EQU 0x0001_0100
+;----------------------------------------------
+;                Exercise 2
+;                Oliver Harris
+;
+; Prints Hello World to display
+;
+; Last modified: 16/02/26
+;
+; Known issues: cannot run at full speed
+;
+;-----------------------------------------------
 
-start          li a0, ASCII_H_UPPER
+j start
+LCD_ADDRESS    EQU 0x0001_0100
+STACK_START    DEFS           64
+STACK_END      
+
+start          la sp, STACK_END
+               li a0, ASCII_H_UPPER
+               call write_char
+               li a0, ASCII_E_LOWER
+               call write_char
+               li a0, ASCII_L_LOWER
+               call write_char
+               li a0, ASCII_L_LOWER
+               call write_char
+               li a0, ASCII_O_LOWER
+               call write_char
+               li a0, ASCII_SP
+               call write_char
+               li a0, ASCII_W_UPPER
+               call write_char
+               li a0, ASCII_O_LOWER
+               call write_char
+               li a0, ASCII_R_LOWER
+               call write_char
+               li a0, ASCII_L_LOWER
+               call write_char
+               li a0, ASCII_D_LOWER
+               call write_char
+               li a0, ASCII_EXCLAMATION
                call write_char
 
 end       j .
@@ -11,9 +49,12 @@ end       j .
 ; write_char
 ; a0 = character to write
 write_char:
+               subi sp, sp, 4              ; store ra onto stack
+               sw ra, [sp]
+               li t2, LCD_ADDRESS
+
 ; Set to read ‘control’ with data bus direction as input
 ; {R/W = 1, RS = 0}
-               li t2, LCD_ADDRESS
 step_1         lb t0, 0x1[t2]
                ori t0, t0, 0b0000_0001     ; R/W = 1
                andi t0, t0, 0b1111_1101    ; RS = 0
@@ -25,7 +66,7 @@ step_2         lb t0, 0x1[t2]              ; re-reads to prevent stale data
                sb t0, 0x1[t2]
 
 ; Delay to stretch pulse width
-step_2a        li a0, 10                   ; delay >= 20 cycles
+step_2a        li a1, 10                   ; delay >= 20 cycles
                call delay_loop
 
 ; Read LCD status byte
@@ -36,7 +77,7 @@ step_4         andi t0, t0, 0b1111_1011    ; E = 0
                sb t0, 0x1[t2]
 
 ; Added delay to separate enable pulses
-step_5         li a0, 20                   ; delay >= 48 cycles
+step_5         li a1, 20                   ; delay >= 48 cycles
                call delay_loop
 
 ; If bit 7 of status byte was high repeat from step 2
@@ -57,13 +98,16 @@ step_9         ori t0, t0, 0b0000_0100     ; E = 1
                sb t0, 0x1[t2]
 
 ; Delay to stretch pulse width
-step_9a        li a0, 10                   ; delay >= 20 cycles
+step_9a        li a1, 10                   ; delay >= 20 cycles
                call delay_loop
 
 ; Disable bus (E := 0)
 step_10        andi t0, t0, 0b1111_1011    ; E = 0
                sb t0, 0x1[t2]
 
+               lw ra, [sp]                 ; load ra
+               addi sp, sp, 4
+               ret
 
 
 
