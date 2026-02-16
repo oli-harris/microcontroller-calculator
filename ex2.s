@@ -6,39 +6,42 @@
 ;
 ; Last modified: 16/02/26
 ;
-; Known issues: cannot run at full speed
+; Known issues: cannot run at full speed,
+;               terminal not cleared
 ;
 ;-----------------------------------------------
 
-j start
+               j start
+
 LCD_ADDRESS    EQU 0x0001_0100
-STACK_START    DEFS           64
-STACK_END      
+STACK          DEFS 64
+STACK_END
 
 start          la sp, STACK_END
-               li a0, ASCII_H_UPPER
+
+               li a0, 'H'
                call write_char
-               li a0, ASCII_E_LOWER
+               li a0, 'e'
                call write_char
-               li a0, ASCII_L_LOWER
+               li a0, 'l'
                call write_char
-               li a0, ASCII_L_LOWER
+               li a0, 'l'
                call write_char
-               li a0, ASCII_O_LOWER
+               li a0, 'o'
                call write_char
-               li a0, ASCII_SP
+               li a0, ' '
                call write_char
-               li a0, ASCII_W_UPPER
+               li a0, 'W'
                call write_char
-               li a0, ASCII_O_LOWER
+               li a0, 'o'
                call write_char
-               li a0, ASCII_R_LOWER
+               li a0, 'r'
                call write_char
-               li a0, ASCII_L_LOWER
+               li a0, 'l'
                call write_char
-               li a0, ASCII_D_LOWER
+               li a0, 'd'
                call write_char
-               li a0, ASCII_EXCLAMATION
+               li a0, '!'
                call write_char
 
 end       j .
@@ -66,7 +69,7 @@ step_2         lb t0, 0x1[t2]              ; re-reads to prevent stale data
                sb t0, 0x1[t2]
 
 ; Delay to stretch pulse width
-step_2a        li a1, 10                   ; delay >= 20 cycles
+step_2a        li a1, 5                    ; delay >= 20 cycles
                call delay_loop
 
 ; Read LCD status byte
@@ -77,11 +80,11 @@ step_4         andi t0, t0, 0b1111_1011    ; E = 0
                sb t0, 0x1[t2]
 
 ; Added delay to separate enable pulses
-step_5         li a1, 20                   ; delay >= 48 cycles
+step_5         li a1, 12                   ; delay >= 48 cycles
                call delay_loop
 
 ; If bit 7 of status byte was high repeat from step 2
-step_6         andi t1, t1, 0b0100_0000
+step_6         andi t1, t1, 0b1000_0000
                bnez t1, step_2
 
 ; Set to write ‘data’ with data bus direction as output
@@ -98,7 +101,7 @@ step_9         ori t0, t0, 0b0000_0100     ; E = 1
                sb t0, 0x1[t2]
 
 ; Delay to stretch pulse width
-step_9a        li a1, 10                   ; delay >= 20 cycles
+step_9a        li a1, 5                    ; delay >= 20 cycles
                call delay_loop
 
 ; Disable bus (E := 0)
@@ -113,4 +116,3 @@ step_10        andi t0, t0, 0b1111_1011    ; E = 0
 
 ; --- INCLUDES ---
 INCLUDE utility.s
-INCLUDE ascii.s
