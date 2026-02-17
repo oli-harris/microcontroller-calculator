@@ -3,15 +3,17 @@
 ;                Oliver Harris
 ;
 ; Allows writing of characters including
-; special characters: \f
+; special characters: \b, \t, \n, \v, \f, \r
 ;
 ; Last modified: 17/02/26
 ;
-; Known bugs: doesnt support \b, \t, \n, \v, \r
+; Known bugs: only supports two lines
 ;
 ;--------------------------------------------------
 
 LCD_ADDRESS       EQU 0x0001_0100
+
+lcd_line_pos      defw 0
 
 ; write_char
 ; a0 = character to write
@@ -25,6 +27,7 @@ write_char:
                   slli a0, a0, 2
                   add t0, t0, a0
                   lw t0, [t0]
+                  li a1, 0                       ; writing command
                   jr t0
 
 _write_char       li a1, 1
@@ -39,20 +42,42 @@ specials_table    defw _write_backspace
                   defw _write_carriage_return
 
 _write_backspace:
+                  li a0, 0x10                    ; move cursor left
+                  call write_data
+
 
 _write_tab:
+                  li a0, 0x14                    ; move cursor right
+                  call write_data
 
 _write_line_feed:
+                  li a0, 0xC0                    ; move cursor down
+                  li t0, lcd_line_pos            ; stores at line 1
+                  li t1, 1
+                  sw t1, [t0]
+                  j write_data
 
 _write_vertical_tab:
+                  li a0, 0x80                    ; move cursor up
+                  la t0, lcd_line_pos            ; stores at line 0
+                  li t1, 1
+                  sw t1, [t0]
+                  j write_data
 
 _write_form_feed:
-                  li a0, 1
-                  li a1, 0
+                  li a0, 0x01
                   j write_data
 
 
 _write_carriage_return:
+                  lw t0, lcd_line_pos
+                  bnez t0, _return_line_1
+_return_line_0    li a0, 0x80
+                  li a1, 0
+                  j write_data
+_return_line_1    li a0, 0xC0
+                  li a1, 0
+                  j write_data
 
 
 
