@@ -7,7 +7,8 @@
 ;
 ; Last modified: 17/02/26
 ;
-; Known bugs: only supports two lines
+; Known bugs: only supports two lines,
+;             \n and \v dont track col position
 ;
 ;--------------------------------------------------
 
@@ -30,7 +31,6 @@ loop_write_char     lb a0, [a3]
 end_write_string    lw ra, [sp]
                     addi sp, sp, 4
                     ret
-
 
 
 ; write_char
@@ -98,8 +98,6 @@ _return_line_0      li a0, 0x80
 _return_line_1      li a0, 0xC0
                     li a1, 0
                     j write_data
-
-
 
 
 ; write_data
