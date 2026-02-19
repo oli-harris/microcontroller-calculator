@@ -10,6 +10,8 @@
 ; Known bugs: only supports two lines,
 ;             \n and \v dont track col position
 ;
+; Requires: utility.s
+;
 ;--------------------------------------------------
 
 LCD_ADDRESS         EQU 0x0001_0100
@@ -136,10 +138,4 @@ step_10             andi t0, t0, 0b1111_1011       ; disable bus (E = 0)
                     sb t0, 0x1[t2]
 write_data_end      lw ra, [sp]                    ; restore ra
                     addi sp, sp, 4
-                    ret
-
-; delay_loop
-; a2 = delay in cycles / 4
-delay_loop          subi a2, a2, 1
-                    bgez a2, delay_loop
                     ret
