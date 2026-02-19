@@ -11,7 +11,7 @@
 ;  j test_clear_screen
 ;  j test_newline
 
-; j test_str_hello_world
+;  j test_str_hello_world
 ; j test_str_null_terminator
 ; j test_str_carriage_return
 ; j test_str_backspace
@@ -19,6 +19,8 @@
 ; j test_str_vertical_tab
                                  j test_str_vertical_tab_complex
 ; j test_carriage_both_lines
+;  j test_str_overflow
+;  j test_str_row_overflow
 
 ; --- CHAR TESTS ---
 
@@ -31,7 +33,7 @@ test_clear_screen:
                                  call write_char
                                  li a0, 'b'
                                  call write_char
-                                 li a0, '\f'                              ; clear screen
+                                 li a0, '\f'                                      ; clear screen
                                  call write_char
                                  li a0, 'S'
                                  call write_char
@@ -57,7 +59,7 @@ test_newline:
                                  call write_char
                                  li a0, 'o'
                                  call write_char
-                                 li a0, '\n'                              ; newline
+                                 li a0, '\n'                                      ; newline
                                  call write_char
                                  li a0, 'W'
                                  call write_char
@@ -129,9 +131,9 @@ test_str_vertical_tab            la a0, p_str_vertical_tab
                                  j end
 
 ; test_str_vertical_tab_complex
-; OUTPUT: Line 1: "Up World"
-;         Line 2: "Down Hello"
-p_str_vertical_tab_complex       defb "\f\nDown\vUp\n World\v Hello\0"
+; OUTPUT: Line 1: "Hello"
+;         Line 2: "World"
+p_str_vertical_tab_complex       defb "\f\nDown\vUp\nWorld\vHello\0"
                                  align
 test_str_vertical_tab_complex    la a0, p_str_vertical_tab_complex
                                  call write_string
@@ -148,6 +150,25 @@ test_str_carriage_both_lines     la a0, p_str_carriage_both_lines
                                  j end
 
 
+; test_str_col_overflow
+; OUTPUT: Line 1: "123456789abcdeFG"
+;         Line 2:
+; Proves controller tracks col_pos past 16
+p_str_col_overflow               defb "\f123456789abcdefghijk\b\b\b\b\b\bFG\0"
+                                 align
+test_str_col_overflow            la a0, p_str_col_overflow
+                                 call write_string
+                                 j end
+
+; test_str_row_overflow
+; OUTPUT: Line 1: "Hello"
+;         Line 2: "World"
+; Proves controller doesnt track row_pos past 1
+p_str_row_overflow               defb "\f\n\n\n\nWorld\v\vHello\0"
+                                 align
+test_str_row_overflow            la a0, p_str_row_overflow
+                                 call write_string
+                                 j end
 
 
 ; test_str_copy_me
