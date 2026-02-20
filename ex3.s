@@ -27,7 +27,7 @@ DEBOUNCE_MS           EQU 20                              ; delay for button deb
 ; --- Memory ---
 buttons_prev          defb 0
 table_position        defb -1                             ; position in table (clamped)
-                                                          ; starts at -1 to show first question on btn press
+; starts at -1 to show first question on btn press
                       align
 p_str_answer          defw 0                              ; points to answer string
 p_null                defw 0                              ; null pointer
@@ -52,7 +52,7 @@ check_buttons         andi t0, a0, 0b0001                 ; Button 1 Pressed
                       andi t0, a0, 0b1000                 ; Button 4 Pressed
                       bnez t0, display_entire_answer
 
-end_loop              li a1, DEBOUNCE_MS                           
+end_loop              li a1, DEBOUNCE_MS
                       call delay_ms
 
 end                   j loop
