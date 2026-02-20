@@ -38,13 +38,18 @@ lcd_line_pos        defb 0
 ; --- Functions ---
 
 ; write_string
-; Input: a0 = string to write
+; Purpose: Outputs string to LCD, interpreting special characters
+;          (\b, \t, \n, \v, \f, \r)
+; Input: a0 = pointer to null-terminated string
+; Output: None
+; Modifies: a0, a3, t0, a1
+; Preserves: ra
 write_string:
                     subi sp, sp, 4
                     sw ra, [sp]
                     mv a3, a0                      ; a3 stores pointer to pos in str
 write_string_loop   lb a0, [a3]                    ; loop chars until reaches null terminator
-                    beqz a0, end_write_string
+                    beqz a0, write_string_end
                     call write_char
                     addi a3, a3, 1
                     j write_string_loop
@@ -54,11 +59,15 @@ write_string_end    lw ra, [sp]
 
 
 ; write_char
-; a0 = character to write
+; Purpose: Outputs character to LCD, interpreting special characters
+;          (\b, \t, \n, \v, \f, \r)
+; Input: a0 = character to write
+; Output: None
+; Modifies: a0, t0, a1
 write_char:
-                    li t0, ASCII_SPECIALS_START     ; check if char is a special char
+                    li t0, ASCII_SPECIALS_END     ; check if char is a special char
                     bgtu a0, t0, _write_char
-                    li t0, ASCII_SPECIALS_END
+                    li t0, ASCII_SPECIALS_START
                     bltu a0, t0, _write_char
                     la t0, specials_table           ; lookup special char function
                     subi a0, a0, ASCII_SPECIALS_START
@@ -68,10 +77,10 @@ write_char:
                     li a1, 0                       ; write command
                     jr t0
 
-write_char_direct   li a1, 1
+_write_char         li a1, 1                       ; write data
                     j write_data
 
-; Handle Special characters
+; Jump table for special characters handling
 specials_table      defw _write_backspace
                     defw _write_tab
                     defw _write_line_feed
@@ -117,8 +126,11 @@ _return_line_1      li a0, LCD_CMD_NEWLINE         ; return to line 1
 
 
 ; write_data
-; a0 = data to write
-; a1 = 1 for data, 0 for command
+; Purpose: Writes data or command to LCD, when not busy
+; Input: a0 = data to write
+;        a1 = 1 for data, 0 for command
+; Output: None
+; Modifies: a0, a1, t0, t1, t2
 write_data:
                     subi sp, sp, 4                 ; store ra
                     sw ra, [sp]
@@ -137,7 +149,7 @@ write_data_step_4   andi t0, t0, 0b1111_1011       ; disable bus (E = 0)
 write_data_step_5   li a2, DELAY_SEPARATE          ; seperate pulses
                     call delay_loop
 write_data_step_6   andi t1, t1, 0b1000_0000       ; loop if busy flag (bit 7)
-                    bnez t1, step_2
+                    bnez t1, write_data_step_2
 write_data_step_7   andi t0, t0, 0b1111_1100       ; R/W = 0, RS = 0
                     andi a1, a1, 1                 ; enforce input a1 boolean
                     slli a1, a1, 1
