@@ -23,15 +23,15 @@ for index, country_data in enumerate(europe):
     country = unidecode(country_data["properties"]["country"])
     capital = unidecode(country_data["properties"]["capital"])
 
-    output += f'capitals_country1 defb "{country}"\n'
-    output += f'capitals_capital1 defb "{capital}"\n'
+    output += f'capitals_country{index} defb "{country}\\0"\n'
+    output += f'capitals_capital{index} defb "{capital}\\0"\n'
 
 output += "align\n\n"
 
 output += "capitals_table defw capitals_country1, capitals_capital1\n"
 
-for i in range(2, len(europe)):
-    output += f"               defw capitals_country{i} capitals_capital{i}\n"
+for index in range(2, len(europe)):
+    output += f"               defw capitals_country{index} capitals_capital{index}\n"
 
 
 with open('capitals_table.s', 'w') as f:
