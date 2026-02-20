@@ -12,8 +12,10 @@
 
 BUTTONS_ADDRESS          EQU 0x0001_0001
 buttons_prev             defb 0
-table_position           defb 0                              ; position in table (clamped from 0 to TABLE_CAPITALS_SIZE)
+table_position           defb 0                              ; position in table (clamped)
+                         align
 p_str_answer             defw 0                              ; points to answer string
+p_null                   defw 0                              ; null pointer
 welcome_message          defb "\fCapitals Trivia!\n...\0"
                          align
 
@@ -30,10 +32,10 @@ check_buttons            andi t0, a0, 0b0001                 ; Button 1 Pressed
                          bnez t0, display_next_trivia
 
                          andi t0, a0, 0b0100                 ; Button 3 Pressed
-                         bnez t0, btn3_pressed
+                         bnez t0, display_next_answer
 
                          andi t0, a0, 0b1000                 ; Button 4 Pressed
-                         bnez t0, btn4_pressed
+                         bnez t0, display_entire_answer
 
 end_loop                 li a1, 20
                          call delay_ms
@@ -62,17 +64,18 @@ display_prev_trivia:
                          lb a0, [t0]
                          subi a0, a0, 1
                          bgez a0, skip_prev_clamp
-                         li a0, TABLE_CAPITALS_SIZE
+                         li a0, CAPITALS_TABLE_SIZE
                          subi a0, a0, 1
 skip_prev_clamp          sb a0, [t0]
                          j display_question
+
 
 ; Next trivia
 display_next_trivia:
                          la t0, table_position               ; table_pos++
                          lb a0, [t0]
                          addi a0, a0, 1
-                         li t1, TABLE_CAPITALS_SIZE          ; overflow to 0
+                         li t1, CAPITALS_TABLE_SIZE          ; overflow to 0
                          blt a0, t1, skip_next_clamp
                          mv a0, x0
 skip_next_clamp          sb a0, [t0]
@@ -82,30 +85,48 @@ skip_next_clamp          sb a0, [t0]
 ; Display Question
 ; Input: a0 = position
 display_question:
-                         la t0, table_capitals
+                         la t0, capitals_table
                          slli a0, a0, 3
                          add t0, t0, a0
                          lw a0, [t0]                         ; a0=question string
 
+                         lw t1, 4[t0]                        ; store pointer to answer string
+                         la t0, p_str_answer
+                         sw t1, [t0]
 
                          call write_string
                          j end_loop
 
 
 ; Display Answer
-display_entire_answer    li a0, '\f'
-                         call write_char
-                         addi t6, t6, 1
+display_entire_answer    la s0, p_str_answer                 ; stores p_str_answer address
+                         lw a0, [s0]
+                         call write_string
+
+                         la t0, p_null                       ; point to end of string
+                         sw t0, [s0]
                          j end_loop
 
 
+; Display next character from answer
+display_next_answer      la s0, p_str_answer                 ; t0 = pointer to char in answer
+                         lw s1, [s0]
+                         lb a0, [s1]                         ; a0 = char
+
+                         beqz a0, end_loop                   ; entire answer printed, skip
+                         call write_char
+
+                         addi s1, s1, 1                      ; p_str_answer++
+                         sb s1, [s0]
+                         j end_loop
 
 
 ; --- STACK ---
 STACK                    DEFS 128
 STACK_END
 
+
 ; --- INCLUDES ---
 include lcd.s
 include utility.s
-include data_table.s
+include capitals_table.s
