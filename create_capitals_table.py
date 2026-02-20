@@ -23,7 +23,7 @@ for index, country_data in enumerate(europe):
     country = unidecode(country_data["properties"]["country"])
     capital = unidecode(country_data["properties"]["capital"])
 
-    output += f'capitals_country{index} defb "{country}\\0"\n'
+    output += f'\\fcapitals_country{index} defb "{country}\\0"\\n\n'
     output += f'capitals_capital{index} defb "{capital}\\0"\n'
 
 output += "align\n\n"

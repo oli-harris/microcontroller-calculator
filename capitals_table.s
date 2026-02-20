@@ -5,109 +5,109 @@
 
 CAPITALS_TABLE_SIZE    EQU 3
 
-capitals_country0 defb "Albania\0"
+\fcapitals_country0 defb "Albania\0"\n
 capitals_capital0 defb "Tirana\0"
-capitals_country1 defb "Andorra\0"
+\fcapitals_country1 defb "Andorra\0"\n
 capitals_capital1 defb "Andorra la Vella\0"
-capitals_country2 defb "Austria\0"
+\fcapitals_country2 defb "Austria\0"\n
 capitals_capital2 defb "Vienna\0"
-capitals_country3 defb "Belarus\0"
+\fcapitals_country3 defb "Belarus\0"\n
 capitals_capital3 defb "Minsk\0"
-capitals_country4 defb "Belgium\0"
+\fcapitals_country4 defb "Belgium\0"\n
 capitals_capital4 defb "Brussels\0"
-capitals_country5 defb "Bosnia and Herzegovina\0"
+\fcapitals_country5 defb "Bosnia and Herzegovina\0"\n
 capitals_capital5 defb "Sarajevo\0"
-capitals_country6 defb "Bulgaria\0"
+\fcapitals_country6 defb "Bulgaria\0"\n
 capitals_capital6 defb "Sofia\0"
-capitals_country7 defb "Croatia\0"
+\fcapitals_country7 defb "Croatia\0"\n
 capitals_capital7 defb "Zagreb\0"
-capitals_country8 defb "Cyprus\0"
+\fcapitals_country8 defb "Cyprus\0"\n
 capitals_capital8 defb "Nicosia\0"
-capitals_country9 defb "Czech Republic\0"
+\fcapitals_country9 defb "Czech Republic\0"\n
 capitals_capital9 defb "Prague\0"
-capitals_country10 defb "Denmark\0"
+\fcapitals_country10 defb "Denmark\0"\n
 capitals_capital10 defb "Copenhagen\0"
-capitals_country11 defb "Estonia\0"
+\fcapitals_country11 defb "Estonia\0"\n
 capitals_capital11 defb "Tallinn\0"
-capitals_country12 defb "Faroe Islands\0"
+\fcapitals_country12 defb "Faroe Islands\0"\n
 capitals_capital12 defb "Torshavn\0"
-capitals_country13 defb "Finland\0"
+\fcapitals_country13 defb "Finland\0"\n
 capitals_capital13 defb "Helsinki\0"
-capitals_country14 defb "France\0"
+\fcapitals_country14 defb "France\0"\n
 capitals_capital14 defb "Paris\0"
-capitals_country15 defb "Germany\0"
+\fcapitals_country15 defb "Germany\0"\n
 capitals_capital15 defb "Berlin\0"
-capitals_country16 defb "Gibraltar\0"
+\fcapitals_country16 defb "Gibraltar\0"\n
 capitals_capital16 defb "Gibraltar\0"
-capitals_country17 defb "Greece\0"
+\fcapitals_country17 defb "Greece\0"\n
 capitals_capital17 defb "Athens\0"
-capitals_country18 defb "Guernsey\0"
+\fcapitals_country18 defb "Guernsey\0"\n
 capitals_capital18 defb "St Peter Port\0"
-capitals_country19 defb "Hungary\0"
+\fcapitals_country19 defb "Hungary\0"\n
 capitals_capital19 defb "Budapest\0"
-capitals_country20 defb "Iceland\0"
+\fcapitals_country20 defb "Iceland\0"\n
 capitals_capital20 defb "Reykjavik\0"
-capitals_country21 defb "Ireland\0"
+\fcapitals_country21 defb "Ireland\0"\n
 capitals_capital21 defb "Dublin\0"
-capitals_country22 defb "Isle of Man\0"
+\fcapitals_country22 defb "Isle of Man\0"\n
 capitals_capital22 defb "Douglas\0"
-capitals_country23 defb "Italy\0"
+\fcapitals_country23 defb "Italy\0"\n
 capitals_capital23 defb "Rome\0"
-capitals_country24 defb "Jersey\0"
+\fcapitals_country24 defb "Jersey\0"\n
 capitals_capital24 defb "Saint Helier\0"
-capitals_country25 defb "Kosovo\0"
+\fcapitals_country25 defb "Kosovo\0"\n
 capitals_capital25 defb "Pristina\0"
-capitals_country26 defb "Latvia\0"
+\fcapitals_country26 defb "Latvia\0"\n
 capitals_capital26 defb "Riga\0"
-capitals_country27 defb "Liechtenstein\0"
+\fcapitals_country27 defb "Liechtenstein\0"\n
 capitals_capital27 defb "Vaduz\0"
-capitals_country28 defb "Lithuania\0"
+\fcapitals_country28 defb "Lithuania\0"\n
 capitals_capital28 defb "Vilnius\0"
-capitals_country29 defb "Luxembourg\0"
+\fcapitals_country29 defb "Luxembourg\0"\n
 capitals_capital29 defb "Luxembourg\0"
-capitals_country30 defb "Macedonia\0"
+\fcapitals_country30 defb "Macedonia\0"\n
 capitals_capital30 defb "Skopje\0"
-capitals_country31 defb "Malta\0"
+\fcapitals_country31 defb "Malta\0"\n
 capitals_capital31 defb "Valletta\0"
-capitals_country32 defb "Moldova\0"
+\fcapitals_country32 defb "Moldova\0"\n
 capitals_capital32 defb "Chisinau\0"
-capitals_country33 defb "Monaco\0"
+\fcapitals_country33 defb "Monaco\0"\n
 capitals_capital33 defb "Monaco\0"
-capitals_country34 defb "Montenegro\0"
+\fcapitals_country34 defb "Montenegro\0"\n
 capitals_capital34 defb "Podgorica\0"
-capitals_country35 defb "Netherlands\0"
+\fcapitals_country35 defb "Netherlands\0"\n
 capitals_capital35 defb "Amsterdam\0"
-capitals_country36 defb "Norway\0"
+\fcapitals_country36 defb "Norway\0"\n
 capitals_capital36 defb "Oslo\0"
-capitals_country37 defb "Poland\0"
+\fcapitals_country37 defb "Poland\0"\n
 capitals_capital37 defb "Warsaw\0"
-capitals_country38 defb "Portugal\0"
+\fcapitals_country38 defb "Portugal\0"\n
 capitals_capital38 defb "Lisbon\0"
-capitals_country39 defb "Romania\0"
+\fcapitals_country39 defb "Romania\0"\n
 capitals_capital39 defb "Bucharest\0"
-capitals_country40 defb "Russia\0"
+\fcapitals_country40 defb "Russia\0"\n
 capitals_capital40 defb "Moscow\0"
-capitals_country41 defb "San Marino\0"
+\fcapitals_country41 defb "San Marino\0"\n
 capitals_capital41 defb "San Marino\0"
-capitals_country42 defb "Serbia\0"
+\fcapitals_country42 defb "Serbia\0"\n
 capitals_capital42 defb "Belgrade\0"
-capitals_country43 defb "Slovakia\0"
+\fcapitals_country43 defb "Slovakia\0"\n
 capitals_capital43 defb "Bratislava\0"
-capitals_country44 defb "Slovenia\0"
+\fcapitals_country44 defb "Slovenia\0"\n
 capitals_capital44 defb "Ljubljana\0"
-capitals_country45 defb "Spain\0"
+\fcapitals_country45 defb "Spain\0"\n
 capitals_capital45 defb "Madrid\0"
-capitals_country46 defb "Svalbard and Jan Mayen\0"
+\fcapitals_country46 defb "Svalbard and Jan Mayen\0"\n
 capitals_capital46 defb "Longyearbyen\0"
-capitals_country47 defb "Sweden\0"
+\fcapitals_country47 defb "Sweden\0"\n
 capitals_capital47 defb "Stockholm\0"
-capitals_country48 defb "Switzerland\0"
+\fcapitals_country48 defb "Switzerland\0"\n
 capitals_capital48 defb "Berne\0"
-capitals_country49 defb "Ukraine\0"
+\fcapitals_country49 defb "Ukraine\0"\n
 capitals_capital49 defb "Kiev\0"
-capitals_country50 defb "United Kingdom\0"
+\fcapitals_country50 defb "United Kingdom\0"\n
 capitals_capital50 defb "London\0"
-capitals_country51 defb "Vatican\0"
+\fcapitals_country51 defb "Vatican\0"\n
 capitals_capital51 defb "Vatican\0"
 align
 
