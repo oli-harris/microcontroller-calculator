@@ -20,7 +20,7 @@ lcd_line_pos        defw 0
 
 
 ; write_string
-; a0 = string to write
+; Input: a0 = string to write
 write_string:
                     subi sp, sp, 4
                     sw ra, [sp]
