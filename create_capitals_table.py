@@ -28,9 +28,9 @@ for index, country_data in enumerate(europe):
 
 output += "align\n\n"
 
-output += "capitals_table defw capitals_country1, capitals_capital1\n"
+output += "capitals_table defw capitals_country0, capitals_capital0\n"
 
-for index in range(2, len(europe)):
+for index in range(1, len(europe)):
     output += f"               defw capitals_country{index}, capitals_capital{index}\n"
 
 

@@ -111,7 +111,8 @@ capitals_country51 defb "Vatican\0"
 capitals_capital51 defb "Vatican\0"
 align
 
-capitals_table defw capitals_country1, capitals_capital1
+capitals_table defw capitals_country0, capitals_capital0
+               defw capitals_country1, capitals_capital1
                defw capitals_country2, capitals_capital2
                defw capitals_country3, capitals_capital3
                defw capitals_country4, capitals_capital4
