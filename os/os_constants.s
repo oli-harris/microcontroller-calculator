@@ -6,6 +6,8 @@
 ;
 ; -----------------------------
 
+MSTACK_SIZE              EQU 32 * 4
+
 HARDWARE_BASE_ADDRESS    EQU 0x0001_0000
 OFFSET_LED               EQU 0x0            ; (8 bits; redundant but improves readability)
 OFFSET_BUTTONS           EQU 0x1            ; (4 bits)

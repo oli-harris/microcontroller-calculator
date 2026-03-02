@@ -8,13 +8,13 @@
 ; ------------------------------------------
 
 ; --- CONSTANTS ---
-STACK_SIZE    EQU 256
+STACK_SIZE    EQU 256 * 4 ; reserve 256 words
 
 ; --- OS ---
 include os/init.s
 
 ; --- APPLICATION ---
-start         j start
+start    j start
 
 ; --- LIBRARIES ---
 
