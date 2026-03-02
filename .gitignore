@@ -1,3 +1,4 @@
 *.kmd
 vivado*
 .Xil
+.vscode/
