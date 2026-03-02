@@ -10,7 +10,7 @@
 ; Known bugs: only supports two lines,
 ;             \n and \v dont track col position
 ;
-; Requires: utility.s
+; Requires: delay.s
 ;
 ;--------------------------------------------------
 

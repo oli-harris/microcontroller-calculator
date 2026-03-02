@@ -1,5 +1,5 @@
 ;--------------------------------------------------
-;               Reusable Utility Functions
+;               Delay Loop (cycle based)
 ;               Oliver Harris
 ;
 ; Implements: delay_ms

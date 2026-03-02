@@ -175,6 +175,6 @@ STACK_END
 
 
 ; --- INCLUDES ---
-include lcd.s
-include utility.s
-include capitals_table.s
+include lib/lcd_privileged.s
+include lib/delay.s
+include data/capitals_table.s
