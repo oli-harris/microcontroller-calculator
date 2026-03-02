@@ -2,13 +2,16 @@
 ;   Tests for LCD
 ;   Oliver Harris
 ;
-; Last modified: 17/02/26
+; Last modified: 02/03/26
 ;
 ;---------------------------------------------
-                                 la sp, STACK_END
+
+include ../os/init.s
+STACK_SIZE EQU 32 * 4
 
 ; --- ALL AVAILABLE TESTS ---
-;  j test_clear_screen
+start:
+                                 j test_clear_screen
 ;  j test_newline
 
 ;  j test_str_hello_world
@@ -192,7 +195,7 @@ test_str_copy_me                 la a0, p_str_copy_me
 
 ; --- END TESTS ---
 
-end               j .
+end                              j .
 
 ; --- STACK ---
 
@@ -200,5 +203,4 @@ STACK                            DEFS 128
 STACK_END
 
 ; --- INCLUDES ---
-include lcd.s
-include utility.s
+include ../lib/lcd.s

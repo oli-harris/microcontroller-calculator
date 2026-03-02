@@ -6,7 +6,7 @@
 ;
 ; Last modified: 19/01/26
 ;
-; Known bugs: delay_ms is inprecise,
+; Known bugs: delay_ms is imprecise,
 ;             must only be imported in parent file
 ;
 ;--------------------------------------------------
@@ -15,8 +15,8 @@ LOOPS_PER_MS    EQU 40_000_000 / 1000 / 4  ; assuming 4 cycles per loop
 
 
 ; delay_ms
-; delays programme by specified number of miliseconds
-; in : a1 = number of miliseconds
+; delays programme by specified number of milliseconds
+; in : a1 = number of milliseconds
 delay_ms      li t0, LOOPS_PER_MS
               mul a2, a1, t0         ; ms -> number of cycles
 
