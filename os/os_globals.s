@@ -2,13 +2,13 @@
 ;      OS Global Constants
 ;        Oliver Harris
 ;
-;  Last Modified: 02/03/2026
+;  Last Modified: 03/03/2026
 ;
 ; -----------------------------
 
 MSTACK_SIZE              EQU 32 * 4         ; 32 words
 USER_BASE_ADDRESS        EQU 0x0004_0000    ; (65,536 words)
-ECALL_MAX                EQU 1              ; number of supported ecalls
+ECALL_MAX                EQU 3              ; number of supported ecalls
 
 ; --- HARDWARE ---
 HARDWARE_BASE_ADDRESS    EQU 0x0001_0000

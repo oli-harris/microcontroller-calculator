@@ -2,7 +2,7 @@
 ;         Trap Handlers
 ;         Oliver Harris
 ;
-;  Last Modified: 02/03/2026
+;  Last Modified: 03/03/2026
 ;
 ; -----------------------------
 
@@ -82,7 +82,11 @@ trap_handler_ecall    subi sp, sp, 4
 
 
 ecall_table           defw ecall_lcd_write              ; 0 = write data char to lcd
+                      defw ecall_set_leds               ; 1 = set LEDs
+                      defw ecall_changed_buttons        ; 2 = detect changed buttons
 
 
 ; --- Include ECALL Handlers ---
 include ecalls/lcd.s
+include ecalls/leds.s
+include ecalls/buttons.s
