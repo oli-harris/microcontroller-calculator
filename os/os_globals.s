@@ -22,3 +22,10 @@ OFFSET_LCD_BUS           EQU 0x100          ; (8 bits)
 OFFSET_LCD_STATUS        EQU 0x101          ; (4 bits)
 DELAY_PULSE              EQU 5              ; pulse width delay (>= 20 cycles)
 DELAY_SEPARATE           EQU 12             ; separate pulses (>= 48 cycles)
+
+; TIMER
+OFFSET_TIMER_COUNTER     EQU 0x200          ; Counter value (32 bits)
+OFFSET_TIMER_MODULUS     EQU 0x204          ; Modulus -1 (32 bits)
+OFFSET_TIMER_STATUS      EQU 0x20C          ; Control Status (32 bits)
+OFFSET_TIMER_CLEAR       EQU 0x210          ; Control Clear (32 bits)
+OFFSET_TIMER_SET         EQU 0x214          ; Control Set (32 bits)
