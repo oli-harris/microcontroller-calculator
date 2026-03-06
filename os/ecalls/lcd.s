@@ -1,19 +1,18 @@
-;--------------------------------------------
-;      LCD Privileged Hardware Functions
-;             Oliver Harris
+;------------------------------------------------------------
+;                LCD Write Data/Command
+;                     Oliver Harris
 ;
-; Last modified: 02/03/26
-;
-; Requires: delay.s
-;
-;--------------------------------------------
-
-; ecall_lcd_write
 ; Purpose: Writes data or command to LCD, when not busy
-; Input: a0 = data to write
-;        a1 = 1 for data, 0 for command
+; Input: a0 = bits 0:7 - data to write
+;             bit 8 - 0 for data, 1 for command
 ; Output: None
 ; Modifies: a0, a1, t0, t1, t2
+; Requires: delay.s
+;
+; Last modified: 03/03/26
+;
+;------------------------------------------------------------
+
 ecall_lcd_write:
                      subi sp, sp, 4                  ; store ra
                      sw ra, [sp]

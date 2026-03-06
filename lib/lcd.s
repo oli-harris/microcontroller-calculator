@@ -2,13 +2,13 @@
 ;              LCD Utility Functions
 ;                 Oliver Harris
 ;
-; Allows writing of characters including
-; special characters: \b, \t, \n, \v, \f, \r
+; Allows: - writing of characters including
+;          special characters: \b, \t, \n, \v, \f, \r
+;         - writing of hex values
 ;
-; Last modified: 20/02/26
+; Last modified: 06/03/26
 ;
-; Known bugs: only supports two lines,
-;             \n and \v dont track col position
+; Known bugs: \n and \v dont track col position
 ;
 ; Requires: delay.s
 ;
@@ -39,18 +39,54 @@ lcd_line_pos            defb 0
 ; Input: a0 = pointer to null-terminated string
 ; Output: None
 ; Modifies: a0, a3, t0, a1
-; Preserves: ra
 write_string:
                         subi sp, sp, 4
                         sw ra, [sp]
+
                         mv a3, a0                            ; a3 stores pointer to pos in str
+
 write_string_loop       lb a0, [a3]                          ; loop chars until reaches null terminator
                         beqz a0, write_string_end
                         call write_char
                         addi a3, a3, 1
                         j write_string_loop
+
 write_string_end        lw ra, [sp]
                         addi sp, sp, 4
+                        ret
+
+; write_hex
+; Purpose: Outputs 32-bit value to LCD as n nibbles, padded
+; Input: a0 = value to write
+;        a1 = nibbles to write (1-8)
+; Output: None
+; Modifies: a0, t0, s0, s1
+write_hex:
+                        subi sp, sp, 12
+                        sw ra, [sp]
+                        sw s0, 4[sp]
+                        sw s1, 8[sp]
+
+                        mv s0, a0                            ; s0 = original value
+                        li t0, 4
+                        mul s1, a1, t0                       ; s1 = shift amount
+                        subi s1, s1, 4                       ; shift of first nibble
+
+write_hex_nibble        srl a0, s0, s1                       ; mask off current nibble
+                        andi a0, a0, 0xF
+                        addi a0, a0, '0'                     ; 0-9
+                        li t0, '9'
+                        bleu a0, t0, _write_hex_call_char    ; preserve ra
+                        addi a0, a0, 'A' - '9' - 1           ; A-E
+_write_hex_call_char    call write_char
+
+                        subi s1, s1, 4                       ; shift to next nibble
+                        bgez s1, write_hex_nibble            ; loop until all nibbles written
+
+write_hex_end           lw s1, 8[sp]
+                        lw s0, 4[sp]
+                        lw ra, [sp]
+                        addi sp, sp, 12
                         ret
 
 
@@ -63,6 +99,7 @@ write_string_end        lw ra, [sp]
 write_char:
                         subi sp, sp, 4
                         sw ra, [sp]
+
                         li t0, ASCII_SPECIALS_END            ; check if char is a special char
                         bgtu a0, t0, _write_char
                         li t0, ASCII_SPECIALS_START
@@ -124,6 +161,7 @@ _return_line_1          li a0, LCD_CMD_NEWLINE               ; return to line 1
 
 _write_data             li a7, 0
                         ecall                                ; ecall write to lcd
+
                         lw ra, [sp]
                         addi sp, sp, 4
                         ret
