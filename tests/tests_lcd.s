@@ -18,13 +18,14 @@ start:
 ;  j test_hex_0F
 ;  j test_hex_F3
 ;  j test_hex_ABCD1234
-                                 j test_hex_A001F34
+;  j test_hex_A001F34
 
 
 ;  j test_str_hello_world
 ;  j test_str_null_terminator
 ;  j test_str_carriage_return
 ;  j test_str_backspace
+                                 j test_str_backspace_complex
 ;  j test_str_tab
 ;  j test_str_tab_complex
 ;  j test_str_vertical_tab
@@ -43,7 +44,7 @@ test_clear_screen                li a0, 'B'
                                  call write_char
                                  li a0, 'b'
                                  call write_char
-                                 li a0, '\f'                                      ; clear screen
+                                 li a0, '\f'                                                        ; clear screen
                                  call write_char
                                  li a0, 'S'
                                  call write_char
@@ -68,7 +69,7 @@ test_newline                     li a0, '\f'
                                  call write_char
                                  li a0, 'o'
                                  call write_char
-                                 li a0, '\n'                                      ; newline
+                                 li a0, '\n'                                                        ; newline
                                  call write_char
                                  li a0, 'W'
                                  call write_char
@@ -85,7 +86,7 @@ test_newline                     li a0, '\f'
 ; --- HEX TESTS ---
 ; test_hex_3
 ; OUTPUT: "3"
-test_hex_3                       li a0, '\f'                                      ; clear screen
+test_hex_3                       li a0, '\f'                                                        ; clear screen
                                  call write_char
                                  li a0, 0x3
                                  li a1, 1
@@ -94,7 +95,7 @@ test_hex_3                       li a0, '\f'                                    
 
 ; test_hex_0F
 ; OUTPUT: "0F"
-test_hex_0F                      li a0, '\f'                                      ; clear screen
+test_hex_0F                      li a0, '\f'                                                        ; clear screen
                                  call write_char
                                  li a0, 0xF
                                  li a1, 2
@@ -103,7 +104,7 @@ test_hex_0F                      li a0, '\f'                                    
 
 ; test_hex_F3
 ; OUTPUT: "F3"
-test_hex_F3                      li a0, '\f'                                      ; clear screen
+test_hex_F3                      li a0, '\f'                                                        ; clear screen
                                  call write_char
                                  li a0, 0xF3
                                  li a1, 2
@@ -112,7 +113,7 @@ test_hex_F3                      li a0, '\f'                                    
 
 ; test_hex_ABCD1234
 ; OUTPUT: "ABCD1234"
-test_hex_ABCD1234                li a0, '\f'                                      ; clear screen
+test_hex_ABCD1234                li a0, '\f'                                                        ; clear screen
                                  call write_char
                                  li a0, 0xABCD1234
                                  li a1, 8
@@ -121,7 +122,7 @@ test_hex_ABCD1234                li a0, '\f'                                    
 
 ; test_hex_A001F34
 ; OUTPUT: "A001F34"
-test_hex_A001F34                 li a0, '\f'                                      ; clear screen
+test_hex_A001F34                 li a0, '\f'                                                        ; clear screen
                                  call write_char
                                  li a0, 0xA001F34
                                  li a1, 7
@@ -163,6 +164,15 @@ test_str_carriage_return         la a0, p_str_carriage_return
 p_str_backspace                  defb "\fHelyo\b\blo.\0"
                                  align
 test_str_backspace               la a0, p_str_backspace
+                                 call write_string
+                                 j end
+
+
+; test_str_backspace_complex
+; OUTPUT: "23:11:31" (fixes typo)
+p_str_backspace_complex          defb "\f--  Stopwatch --\n--  00:00:00  --\b\b\b\b\b1\b\b10", 0
+                                 align
+test_str_backspace_complex       la a0, p_str_backspace_complex
                                  call write_string
                                  j end
 
