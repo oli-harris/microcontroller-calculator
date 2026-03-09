@@ -2,15 +2,15 @@
 ;              LCD Utility Functions
 ;                 Oliver Harris
 ;
-; Allows: - writing of characters including
-;          special characters: \b, \t, \n, \v, \f, \r
-;         - writing of hex values
+; Allows: - writing of characters including special characters:
+;           \b (backspace), \t (tab), \n (lower line), \v (upper line),
+;           \f (clear & reset), \r (carriage return)
+;         - writing of padded hex values
+;         - writing of decimal values
 ;
-; Last modified: 06/03/26
+; Last modified: 09/03/26
 ;
 ; Known bugs: \n and \v dont track col position
-;
-; Requires: delay.s
 ;
 ;--------------------------------------------------
 
@@ -60,7 +60,7 @@ write_string_end        lw ra, [sp]
 ; Input: a0 = value to write
 ;        a1 = nibbles to write (1-8)
 ; Output: None
-; Modifies: a0, t0, s0, s1
+; Modifies: a0, t0
 write_hex:
                         subi sp, sp, 12
                         sw ra, [sp]
@@ -89,6 +89,26 @@ write_hex_end           lw s1, 8[sp]
                         addi sp, sp, 12
                         ret
 
+; write_decimal
+; Purpose: Outputs single decimal digit to LCD
+; Input: a0 = decimal digit to write (0-9)
+; Output: None
+; Modifies: a0
+write_decimal:
+                        subi sp, sp, 4
+                        sw ra, [sp]
+
+                        li t0, 10                            ; check valid digit
+                        bgt a0, t0, write_decimal_end
+
+                        addi a0, a0, '0'                     ; convert digit to ASCII
+                        li a1, 1                             ; write data
+                        li a7, 0                             ; ecall write to lcd
+                        ecall
+
+write_decimal_end       lw ra, [sp]
+                        addi sp, sp, 4
+                        ret
 
 ; write_char
 ; Purpose: Outputs character to LCD, interpreting special characters
