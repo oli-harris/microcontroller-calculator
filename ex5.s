@@ -102,6 +102,7 @@ update_stopwatch:
 ; Input: None
 ; Output: a0 = number of digits to update
 ; Modifies: a0, t0, t1
+; Non-Local Access: s0
 increment_time:
                                          subi sp, sp, 8
                                          sw ra, [sp]
@@ -231,6 +232,7 @@ increment_base_24_end                    ret
 ; Input: a0 = number of characters to update (from the right, 1-based)
 ; Uses: s0 = current time in BCD
 ; Modifies: a0, t0, t1
+; Non-Local Access: s0, display_position_map
 update_display:
                                          subi sp, sp, 12
                                          sw ra, 0[sp]
@@ -276,13 +278,15 @@ update_display_end                       lw s2, 8[sp]
 ; button_reset
 ; Purpose: Moves state to idle if paused, resets time to 00:00:00, updates display
 ; Modifies: t0, t1, t2
+; Non-Local Access: STOPWATCH_STATE, s0
 button_reset:
                                          la t1, STOPWATCH_STATE                                    ; Check if timer paused
                                          lb t0, [t1]
                                          li t2, STATE_PAUSED
                                          bne t0, t2, poll_loop                                     ; Return if not paused
 
-                                         sb t2, [t1]                                               ; Sets state to idle
+                                         li t0, STATE_IDLE
+                                         sb t0, [t1]                                               ; Sets state to idle
 
                                          li s0, 0                                                  ; Reset time
                                          li a0, 8
@@ -298,6 +302,7 @@ button_reset:
 ; button_start
 ; Purpose: Moves state to running if not running, starts timer
 ; Modifies: t0, t1
+; Non-Local Access: STOPWATCH_STATE
 button_start:
                                          la t1, STOPWATCH_STATE                                    ; Check if timer running
                                          lb t0, [t1]
@@ -315,6 +320,7 @@ button_start:
 ; button_pause
 ; Purpose: Moves state to paused if running, pauses timer
 ; Modifies: t0, t1
+; Non-Local Access: STOPWATCH_STATE
 button_pause:
                                          la t1, STOPWATCH_STATE                                    ; Check if timer running
                                          lb t0, [t1]
