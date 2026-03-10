@@ -16,6 +16,10 @@ HARDWARE_BASE_ADDRESS       EQU 0x0001_0000
 ; LED + Buttons
 OFFSET_LED                  EQU 0x0            ; (8 bits; redundant but improves readability)
 OFFSET_BUTTONS              EQU 0x1            ; (4 bits)
+MASK_BUTTON_1               EQU 0b0001
+MASK_BUTTON_2               EQU 0b0010
+MASK_BUTTON_3               EQU 0b0100
+MASK_BUTTON_4               EQU 0b1000
 
 ; LCD
 OFFSET_LCD_BUS              EQU 0x100          ; (8 bits)

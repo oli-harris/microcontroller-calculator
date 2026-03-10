@@ -1,24 +1,37 @@
-; -------------------------------------------------
-;                   Exercise 5
-;                  Oliver Harris
+; ---------------------------------------------------------------------------------------------
+;                                          Exercise 5
+;                                        Oliver Harris
 ;
-; Stopwatch with start, stop and reset buttons
-; Features: Displays time as HH:MM:SS
-;           btn1: reset, btn2: start, btn4: stop
-;           (buttons used similar to a casio)
+; 24 hour stopwatch, with start, stop and reset buttons.
+; Features: Displays time as HH:MM:SS with individual character control for efficient updates
+;           btn1: reset, btn2: start, btn4: stop; (buttons used similar to a casio)
 ;
-; Last modified: 06/03/26
+; Last modified: 10/03/26
 ;
-; -------------------------------------------------
+; ---------------------------------------------------------------------------------------------
 
                                          include os/init.s
 STACK_SIZE                               EQU 32
-; s0 = time in BCD HH_MM_SS (20 bits)
+
+; --- Program Specific Memory---
+LCD_INIT_MESSAGE                         defb "\f--  Stopwatch --\n--  XX:XX:XX  --\b\b\b\b", 0
+STOPWATCH_STATE                          defb 1
+
+display_position_map                     defb 0, 1, MAP_SEPARATOR_CODE, 2
+                                         defb 3, MAP_SEPARATOR_CODE, 4, 5
+                                         align
+
+
 
 ; --- Program Specific Constants ---
-LCD_INIT_MESSAGE                         defb "\f--  Stopwatch --\n--  XX:XX:XX  --\b\b\b\b", 0
-STOPWATCH_CHARCOUNT                      EQU 8
+STATE_RUNNING                            EQU 0
+STATE_IDLE                               EQU 1
+STATE_PAUSED                             EQU 2
+
+STOPWATCH_INIT_TIME                      EQU 0x11_22_33
 SEPARATOR_WIDTH                          EQU 1
+
+DEBOUNCE_MS                              EQU 20
 
 MASK_DIGIT                               EQU 0xF
 MASK_LOWER_DIGIT                         EQU 0xF
@@ -41,11 +54,10 @@ SET_CARRY                                EQU 0x100
 
 MAP_SEPARATOR_CODE                       EQU 0xF
 
-                                         align
-
+; --- Main Section ---
 start:
-                                         li s0, 0x11_22_33                                         ; Initialise time
-                                         li a0, TIMER_TICKS_PER_SEC                                ; Set timer for 1 second
+                                         li s0, STOPWATCH_INIT_TIME                                ; Initialise time into s0
+                                         li a0, 1 * TIMER_TICKS_PER_SEC                            ; Set timer for 1 second
                                          li a7, 3
                                          ecall
                                          la a0, LCD_INIT_MESSAGE                                   ; Initialise LCD with message and time
@@ -53,16 +65,34 @@ start:
                                          li a0, 8                                                  ; Display all 8 characters of time
                                          call update_display
 
-poll_loop                                li a1, 20
+poll_loop                                li a1, DEBOUNCE_MS
                                          call delay_ms
 
-                                         li a7, 4                                                  ; check if timer has elapsed
+loop_stopwatch                           la t1, STOPWATCH_STATE                                    ; Check if timer running
+                                         lb t0, [t1]
+                                         bnez t0, loop_buttons
+                                         li a7, 4                                                  ; Detect timer update
                                          ecall
                                          bnez a0, update_stopwatch
 
-                                         j poll_loop
+loop_buttons                             li a7, 2                                                  ; Detect changed buttons
+                                         ecall
+                                         andi t0, a0, MASK_BUTTON_1
+                                         bnez t0, button_reset
+                                         andi t0, a0, MASK_BUTTON_2
+                                         bnez t0, button_start
+                                         andi t0, a0, MASK_BUTTON_4
+                                         bnez t0, button_stop
+
+poll_loop_end                            j poll_loop
 
 
+; --- Functions ---
+
+; update_stopwatch
+; Purpose: Wrapper function to update both time and display, called on timer update
+; Input: None
+; Output: None
 update_stopwatch:
                                          call increment_time
                                          call update_display
@@ -161,6 +191,7 @@ increment_base_60_repack                 slli t1, t1, 4
                                          or a0, a0, t0                                             ; set lower digit
                                          ret
 
+
 ; increment_base_24
 ; Purpose: Increment hours
 ; Input: a0 = original value (8 bits)
@@ -197,16 +228,11 @@ increment_base_24_repack                 slli t1, t1, 4
 increment_base_24_end                    ret
 
 
-
 ; update_display
 ; Purpose: Updates digits up to position on the LCD display
 ; Input: a0 = number of characters to update (from the right, 1-based)
 ; Uses: s0 = current time in BCD
 ; Modifies: a0, t0, t1
-display_position_map                     defb 0, 1, MAP_SEPARATOR_CODE, 2
-                                         defb 3, MAP_SEPARATOR_CODE, 4, 5
-                                         align
-
 update_display:
                                          subi sp, sp, 12
                                          sw ra, 0[sp]
@@ -247,6 +273,52 @@ update_display_end                       lw s2, 8[sp]
                                          lw ra, 0[sp]
                                          addi sp, sp, 12
                                          ret
+
+
+; button_reset
+; Purpose: Moves state to idle if not idle, resets time to 00:00:00, updates display
+; Modifies: t0, t1, t2
+button_reset:
+                                         la t1, STOPWATCH_STATE                                    ; Check if timer idle
+                                         lb t0, [t1]
+                                         li t2, STATE_IDLE
+                                         beq t0, t1, poll_loop                                     ; Return if already idle
+
+                                         sb t2, [t1]                                               ; Sets state to idle
+                                         li s0, 0                                                  ; Reset time
+                                         li a0, 8
+                                         call update_display
+
+                                         j poll_loop
+
+
+; button_start
+; Purpose: Moves state to running if not running, starts timer
+; Modifies: t0, t1
+button_start:
+                                         la t1, STOPWATCH_STATE                                    ; Check if timer running
+                                         lb t0, [t1]
+                                         beqz t0, poll_loop                                        ; Return if already running
+
+                                         sb x0, [t1]                                               ; Sets state to running
+                                         li a7, 4                                                  ; Call to reset timer flag
+                                         ecall
+
+                                         j poll_loop
+
+
+; button_stop
+; Purpose: Moves state to paused if running, pauses timer
+; Modifies: t0, t1
+button_stop:
+                                         la t1, STOPWATCH_STATE                                    ; Check if timer running
+                                         lb t0, [t1]
+                                         bnez t0, poll_loop                                        ; Return if not running
+
+                                         li t0, STATE_PAUSED
+                                         sb t0, [t1]
+                                         j poll_loop
+
 
 ; --- Includes ---
                                          include lib/lcd.s
