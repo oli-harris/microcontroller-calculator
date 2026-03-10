@@ -7,7 +7,7 @@
 ; Output: a0 = button with changed value on rising edge
 ; Modifies: t0, t1, t2
 ;
-; Last modified: 03/03/26
+; Last modified: 10/03/26
 ;
 ;--------------------------------------------
 
@@ -20,6 +20,6 @@ ecall_changed_buttons:
                 lb t2, [t1]                     ; t2 = previous value of buttons
                 sb t0, [t1]                     ; stores current into previous
 
-                not t2, t2                      ; keep only difference in a0
+                not t2, t2                      ; Detect edge into a0
                 and a0, t0, t2
                 ret

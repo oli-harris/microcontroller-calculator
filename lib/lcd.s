@@ -16,11 +16,11 @@
 
 ; --- Library Specific Constants ---
 
-LCD_CMD_LEFT            EQU 0x10                             ; Backspace
-LCD_CMD_RIGHT           EQU 0x14                             ; Tab
-LCD_CMD_NEWLINE         EQU 0xC0                             ; Line feed (down line)
-LCD_CMD_VTAB            EQU 0x80                             ; Vertical tab (up line)
-LCD_CMD_CLEAR           EQU 0x01                             ; Form feed (clear display, reset cursor)
+LCD_CMD_LEFT            EQU 0x110                            ; Backspace
+LCD_CMD_RIGHT           EQU 0x114                            ; Tab
+LCD_CMD_NEWLINE         EQU 0x1C0                            ; Line feed (down line)
+LCD_CMD_VTAB            EQU 0x180                            ; Vertical tab (up line)
+LCD_CMD_CLEAR           EQU 0x101                            ; Form feed (clear display, reset cursor)
 
 ASCII_SPECIALS_START    EQU 0x08                             ; Starts at backspace
 ASCII_SPECIALS_END      EQU 0x0D                             ; Ends at carriage return
@@ -90,7 +90,7 @@ write_hex_end           lw s1, 8[sp]
                         ret
 
 ; write_decimal
-; Purpose: Outputs single decimal digit to LCD
+; Purpose: Outputs single decimal digit to LCD, simpler than write_hex
 ; Input: a0 = decimal digit to write (0-9)
 ; Output: None
 ; Modifies: a0
@@ -98,11 +98,10 @@ write_decimal:
                         subi sp, sp, 4
                         sw ra, [sp]
 
-                        li t0, 10                            ; check valid digit
+                        li t0, 9                             ; check valid digit
                         bgt a0, t0, write_decimal_end
 
                         addi a0, a0, '0'                     ; convert digit to ASCII
-                        li a1, 1                             ; write data
                         li a7, ECALL_LCD_WRITE               ; ecall write to lcd
                         ecall
 
@@ -119,21 +118,19 @@ write_decimal_end       lw ra, [sp]
 write_char:
                         subi sp, sp, 4
                         sw ra, [sp]
+                        ori a0, a0, WRITE_COMMAND            ; write command
 
+                        andi a0, a0, 0xFF                    ; enforce input a0 is ASCII
                         li t0, ASCII_SPECIALS_END            ; check if char is a special char
-                        bgtu a0, t0, _write_char
+                        bgtu a0, t0, _write_data
                         li t0, ASCII_SPECIALS_START
-                        bltu a0, t0, _write_char
+                        bltu a0, t0, _write_data
                         la t0, specials_table                ; lookup special char function
                         subi a0, a0, ASCII_SPECIALS_START
                         slli a0, a0, 2
                         add t0, t0, a0
                         lw t0, [t0]
-                        li a1, 0                             ; write command
                         jr t0
-
-_write_char             li a1, 1                             ; write data
-                        j _write_data
 
 ; Jump table for special characters handling
 specials_table          defw _write_backspace
