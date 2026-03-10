@@ -1,3 +1,10 @@
+;--------------------------------------------------
+;              LED Constants
+;              Oliver Harris
+;
+;
+;--------------------------------------------------
+
 ; LEDS
 LEDS_RAINBOW         EQU 0b11111111    ; using half of leds, as too bright
 LEDS_RED             EQU 0b00010001

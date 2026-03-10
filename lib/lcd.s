@@ -14,7 +14,7 @@
 ;
 ;--------------------------------------------------
 
-; --- Constants ---
+; --- Library Specific Constants ---
 
 LCD_CMD_LEFT            EQU 0x10                             ; Backspace
 LCD_CMD_RIGHT           EQU 0x14                             ; Tab
@@ -103,7 +103,7 @@ write_decimal:
 
                         addi a0, a0, '0'                     ; convert digit to ASCII
                         li a1, 1                             ; write data
-                        li a7, 0                             ; ecall write to lcd
+                        li a7, ECALL_LCD_WRITE               ; ecall write to lcd
                         ecall
 
 write_decimal_end       lw ra, [sp]
@@ -179,7 +179,7 @@ _return_line_0          li a0, LCD_CMD_VTAB                  ; return to line 0
 _return_line_1          li a0, LCD_CMD_NEWLINE               ; return to line 1
                         j _write_data
 
-_write_data             li a7, 0
+_write_data             li a7, ECALL_LCD_WRITE
                         ecall                                ; ecall write to lcd
 
                         lw ra, [sp]

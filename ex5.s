@@ -15,12 +15,14 @@ STACK_SIZE                               EQU 32
 
 ; --- Program Specific Memory---
 LCD_INIT_MESSAGE                         defb "\f--  Stopwatch --\n--  XX:XX:XX  --\b\b\b\b", 0
-STOPWATCH_STATE                          defb STATE_IDLE
+                                         align
+
+stopwatch_time                           defw 00_00_00
+stopwatch_state                          defb STATE_IDLE
 
 display_position_map                     defb 0, 1, MAP_SEPARATOR_CODE, 2
                                          defb 3, MAP_SEPARATOR_CODE, 4, 5
                                          align
-
 
 
 ; --- Program Specific Constants ---
@@ -28,7 +30,6 @@ STATE_RUNNING                            EQU 0
 STATE_IDLE                               EQU 1
 STATE_PAUSED                             EQU 2
 
-STOPWATCH_INIT_TIME                      EQU 0x00_00_00                                            ; BCD time
 SEPARATOR_WIDTH                          EQU 1
 
 DEBOUNCE_MS                              EQU 20
@@ -56,7 +57,6 @@ MAP_SEPARATOR_CODE                       EQU 0xF
 
 ; --- Main Section ---
 start:
-                                         li s0, STOPWATCH_INIT_TIME                                ; Initialise time into s0
 
                                          la a0, LCD_INIT_MESSAGE                                   ; Initialise LCD with message and time
                                          call write_string
@@ -66,14 +66,14 @@ start:
 poll_loop                                li a1, DEBOUNCE_MS
                                          call delay_ms
 
-loop_stopwatch                           la t1, STOPWATCH_STATE                                    ; Check if timer running
+loop_stopwatch                           la t1, stopwatch_state                                    ; Check if timer running
                                          lb t0, [t1]
                                          bnez t0, loop_buttons
-                                         li a7, 5                                                  ; Detect timer update
+                                         li a7, ECALL_TIMER_CHECK_INCREMENT                        ; Detect timer update
                                          ecall
                                          bnez a0, update_stopwatch
 
-loop_buttons                             li a7, 2                                                  ; Detect changed buttons
+loop_buttons                             li a7, ECALL_CHANGED_BUTTONS                              ; Detect changed buttons
                                          ecall
                                          andi t0, a0, MASK_BUTTON_1
                                          bnez t0, button_reset
@@ -102,11 +102,15 @@ update_stopwatch:
 ; Input: None
 ; Output: a0 = number of digits to update
 ; Modifies: a0, t0, t1
-; Non-Local Access: s0
+; Non-Local Access: stopwatch_time (read/write)
 increment_time:
-                                         subi sp, sp, 8
+                                         subi sp, sp, 12
                                          sw ra, [sp]
-                                         sw s1, 4[sp]
+                                         sw s0, 4[sp]
+                                         sw s1, 8[sp]
+
+                                         la t0, stopwatch_time                                     ; s0 = Current time
+                                         lw s0, [t0]
 
                                          andi a0, s0, MASK_SECONDS                                 ; Increment current seconds
                                          call increment_base_60
@@ -154,10 +158,14 @@ increment_time:
                                          add s1, s1, t0
                                          addi s1, s1, SEPARATOR_WIDTH                              ; Continue, ignore carry
 
-increment_time_end                       mv a0, s1                                                 ; a0 = number of digits to update
-                                         lw s1, 4[sp]
+increment_time_end                       la t0, stopwatch_time                                     ; Save incremented time
+                                         sw s0, [t0]
+                                         mv a0, s1                                                 ; a0 = number of digits to update
+
+                                         lw s1, 8[sp]
+                                         lw s0, 4[sp]
                                          lw ra, [sp]
-                                         addi sp, sp, 8
+                                         addi sp, sp, 12
                                          ret
 
 
@@ -230,14 +238,17 @@ increment_base_24_end                    ret
 ; update_display
 ; Purpose: Updates digits up to position on the LCD display
 ; Input: a0 = number of characters to update (from the right, 1-based)
-; Uses: s0 = current time in BCD
 ; Modifies: a0, t0, t1
-; Non-Local Access: s0, display_position_map
+; Non-Local Access: stopwatch_time (read), display_position_map (read)
 update_display:
-                                         subi sp, sp, 12
+                                         subi sp, sp, 16
                                          sw ra, 0[sp]
-                                         sw s1, 4[sp]
-                                         sw s2, 8[sp]
+                                         sw s0, 4[sp]
+                                         sw s1, 8[sp]
+                                         sw s2, 12[sp]
+
+                                         la t0, stopwatch_time                                     ; s0 = Current time
+                                         lw s0, [t0]
 
                                          mv s1, a0                                                 ; s1 = number of characters to update (saved)
                                          mv s2, a0                                                 ; s2 = characters to update
@@ -268,19 +279,20 @@ update_display_separator                 li a0, ':'                             
                                          call write_char
                                          j update_display_write_loop
 
-update_display_end                       lw s2, 8[sp]
-                                         lw s1, 4[sp]
+update_display_end                       lw s2, 12[sp]
+                                         lw s1, 8[sp]
+                                         lw s0, 4[sp]
                                          lw ra, 0[sp]
-                                         addi sp, sp, 12
+                                         addi sp, sp, 16
                                          ret
 
 
 ; button_reset
 ; Purpose: Moves state to idle if paused, resets time to 00:00:00, updates display
 ; Modifies: t0, t1, t2
-; Non-Local Access: STOPWATCH_STATE, s0
+; Non-Local Access: stopwatch_state (read/write), stopwatch_time (write)
 button_reset:
-                                         la t1, STOPWATCH_STATE                                    ; Check if timer paused
+                                         la t1, stopwatch_state                                    ; Check if timer paused
                                          lb t0, [t1]
                                          li t2, STATE_PAUSED
                                          bne t0, t2, poll_loop                                     ; Return if not paused
@@ -288,12 +300,13 @@ button_reset:
                                          li t0, STATE_IDLE
                                          sb t0, [t1]                                               ; Sets state to idle
 
-                                         li s0, 0                                                  ; Reset time
+                                         la t0, stopwatch_time                                     ; Reset time
+                                         sw zero, [t0]
                                          li a0, 8
                                          call update_display
 
                                          li a0, 1                                                  ; Stop and reset timer
-                                         li a7, 4
+                                         li a7, ECALL_TIMER_STOP
                                          ecall
 
                                          j poll_loop
@@ -302,16 +315,16 @@ button_reset:
 ; button_start
 ; Purpose: Moves state to running if not running, starts timer
 ; Modifies: t0, t1
-; Non-Local Access: STOPWATCH_STATE
+; Non-Local Access: stopwatch_state (read/write)
 button_start:
-                                         la t1, STOPWATCH_STATE                                    ; Check if timer running
+                                         la t1, stopwatch_state                                    ; Check if timer running
                                          lb t0, [t1]
                                          beqz t0, poll_loop                                        ; Return if already running
 
                                          sb zero, [t1]                                             ; Sets state to running
 
                                          li a0, 1 * TIMER_TICKS_PER_SEC                            ; Start a 1 second timer
-                                         li a7, 3
+                                         li a7, ECALL_TIMER_START
                                          ecall
 
                                          j poll_loop
@@ -320,17 +333,17 @@ button_start:
 ; button_pause
 ; Purpose: Moves state to paused if running, pauses timer
 ; Modifies: t0, t1
-; Non-Local Access: STOPWATCH_STATE
+; Non-Local Access: stopwatch_state
 button_pause:
-                                         la t1, STOPWATCH_STATE                                    ; Check if timer running
+                                         la t1, stopwatch_state                                    ; Check if timer running
                                          lb t0, [t1]
                                          bnez t0, poll_loop                                        ; Return if not running
 
                                          li t0, STATE_PAUSED
                                          sb t0, [t1]
 
-                                         li a0, 0                                                  ; Stop timer without resetting
-                                         li a7, 4
+                                         li a0, 0                                                  ; Stop timer without resetting count
+                                         li a7, ECALL_TIMER_STOP
                                          ecall
 
                                          j poll_loop
