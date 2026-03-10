@@ -17,7 +17,7 @@ STACK_SIZE                               EQU 32
 LCD_INIT_MESSAGE                         defb "\f--  Stopwatch --\n--  XX:XX:XX  --\b\b\b\b", 0
                                          align
 
-stopwatch_time                           defw 00_00_00
+stopwatch_time                           defw 0x00_00_00
 stopwatch_state                          defb STATE_IDLE
 
 display_position_map                     defb 0, 1, MAP_SEPARATOR_CODE, 2
