@@ -15,7 +15,7 @@ STACK_SIZE                               EQU 32
 
 ; --- Program Specific Memory---
 LCD_INIT_MESSAGE                         defb "\f--  Stopwatch --\n--  XX:XX:XX  --\b\b\b\b", 0
-STOPWATCH_STATE                          defb 1
+STOPWATCH_STATE                          defb STATE_IDLE
 
 display_position_map                     defb 0, 1, MAP_SEPARATOR_CODE, 2
                                          defb 3, MAP_SEPARATOR_CODE, 4, 5
@@ -28,7 +28,7 @@ STATE_RUNNING                            EQU 0
 STATE_IDLE                               EQU 1
 STATE_PAUSED                             EQU 2
 
-STOPWATCH_INIT_TIME                      EQU 0x11_22_33
+STOPWATCH_INIT_TIME                      EQU 0x00_00_00                                            ; BCD time
 SEPARATOR_WIDTH                          EQU 1
 
 DEBOUNCE_MS                              EQU 20
@@ -57,9 +57,7 @@ MAP_SEPARATOR_CODE                       EQU 0xF
 ; --- Main Section ---
 start:
                                          li s0, STOPWATCH_INIT_TIME                                ; Initialise time into s0
-                                         li a0, 1 * TIMER_TICKS_PER_SEC                            ; Set timer for 1 second
-                                         li a7, 3
-                                         ecall
+
                                          la a0, LCD_INIT_MESSAGE                                   ; Initialise LCD with message and time
                                          call write_string
                                          li a0, 8                                                  ; Display all 8 characters of time
@@ -71,7 +69,7 @@ poll_loop                                li a1, DEBOUNCE_MS
 loop_stopwatch                           la t1, STOPWATCH_STATE                                    ; Check if timer running
                                          lb t0, [t1]
                                          bnez t0, loop_buttons
-                                         li a7, 4                                                  ; Detect timer update
+                                         li a7, 5                                                  ; Detect timer update
                                          ecall
                                          bnez a0, update_stopwatch
 
@@ -82,7 +80,7 @@ loop_buttons                             li a7, 2                               
                                          andi t0, a0, MASK_BUTTON_2
                                          bnez t0, button_start
                                          andi t0, a0, MASK_BUTTON_4
-                                         bnez t0, button_stop
+                                         bnez t0, button_pause
 
 poll_loop_end                            j poll_loop
 
@@ -285,9 +283,14 @@ button_reset:
                                          beq t0, t1, poll_loop                                     ; Return if already idle
 
                                          sb t2, [t1]                                               ; Sets state to idle
+
                                          li s0, 0                                                  ; Reset time
                                          li a0, 8
                                          call update_display
+
+                                         li a0, 1                                                  ; Stop and reset timer
+                                         li a7, 4
+                                         ecall
 
                                          j poll_loop
 
@@ -301,22 +304,29 @@ button_start:
                                          beqz t0, poll_loop                                        ; Return if already running
 
                                          sb x0, [t1]                                               ; Sets state to running
-                                         li a7, 4                                                  ; Call to reset timer flag
+
+                                         li a0, 1 * TIMER_TICKS_PER_SEC                            ; Start a 1 second timer
+                                         li a7, 3
                                          ecall
 
                                          j poll_loop
 
 
-; button_stop
+; button_pause
 ; Purpose: Moves state to paused if running, pauses timer
 ; Modifies: t0, t1
-button_stop:
+button_pause:
                                          la t1, STOPWATCH_STATE                                    ; Check if timer running
                                          lb t0, [t1]
                                          bnez t0, poll_loop                                        ; Return if not running
 
                                          li t0, STATE_PAUSED
                                          sb t0, [t1]
+
+                                         li a0, 0                                                  ; Stop timer without resetting
+                                         li a7, 4
+                                         ecall
+
                                          j poll_loop
 
 

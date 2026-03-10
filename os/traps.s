@@ -87,8 +87,9 @@ trap_handler_ecall    subi sp, sp, 4
 ecall_table           defw ecall_lcd_write                ; 0 = write data char to lcd
                       defw ecall_set_leds                 ; 1 = set LEDs
                       defw ecall_changed_buttons          ; 2 = detect changed buttons
-                      defw ecall_timer_init               ; 3 = initialize timer
-                      defw ecall_timer_check_increment    ; 4 = check timer compare flag
+                      defw ecall_timer_start              ; 3 = start timer
+                      defw ecall_timer_stop               ; 4 = stop timer
+                      defw ecall_timer_check_increment    ; 5 = check timer compare flag
 
 
 ; --- Include ECALL Handlers ---

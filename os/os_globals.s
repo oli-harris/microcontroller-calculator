@@ -8,7 +8,7 @@
 
 MSTACK_SIZE                 EQU 32 * 4         ; 32 words
 USER_BASE_ADDRESS           EQU 0x0004_0000    ; (65,536 words)
-ECALL_MAX                   EQU 5              ; number of supported ecalls
+ECALL_MAX                   EQU 6              ; number of supported ecalls
 
 ; --- HARDWARE ---
 HARDWARE_BASE_ADDRESS       EQU 0x0001_0000
@@ -36,6 +36,7 @@ OFFSET_TIMER_SET            EQU 0x214          ; Control Set (32 bits)
 
 TIMER_COMPARE_FLAG          EQU 0x1F           ; (bit 31)
 TIMER_TERMINAL_COUNT_CLR    EQU 0x10           ; Clear terminal count (bit 4)
+TIMER_ENABLE_FLAG           EQU 0x1            ; Timer enable = bit 0
 
 TIMER_TICKS_PER_SEC         EQU 1_000_000      ; Number of timer ticks per second
 TIMER_INIT_FREE_RUNNING     EQU 0x3            ; Enabled, free running, modulus, no interrupt
