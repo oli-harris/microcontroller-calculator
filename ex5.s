@@ -274,13 +274,13 @@ update_display_end                       lw s2, 8[sp]
 
 
 ; button_reset
-; Purpose: Moves state to idle if not idle, resets time to 00:00:00, updates display
+; Purpose: Moves state to idle if paused, resets time to 00:00:00, updates display
 ; Modifies: t0, t1, t2
 button_reset:
-                                         la t1, STOPWATCH_STATE                                    ; Check if timer idle
+                                         la t1, STOPWATCH_STATE                                    ; Check if timer paused
                                          lb t0, [t1]
-                                         li t2, STATE_IDLE
-                                         beq t0, t1, poll_loop                                     ; Return if already idle
+                                         li t2, STATE_PAUSED
+                                         bne t0, t2, poll_loop                                     ; Return if not paused
 
                                          sb t2, [t1]                                               ; Sets state to idle
 
@@ -303,7 +303,7 @@ button_start:
                                          lb t0, [t1]
                                          beqz t0, poll_loop                                        ; Return if already running
 
-                                         sb x0, [t1]                                               ; Sets state to running
+                                         sb zero, [t1]                                             ; Sets state to running
 
                                          li a0, 1 * TIMER_TICKS_PER_SEC                            ; Start a 1 second timer
                                          li a7, 3

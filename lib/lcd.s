@@ -162,13 +162,13 @@ _write_line_feed:
 _write_vertical_tab:
                         li a0, LCD_CMD_VTAB                  ; move cursor up
                         la t0, lcd_line_pos                  ; stores line pos 0
-                        sw x0, [t0]
+                        sw zero, [t0]
                         j _write_data
 
 _write_form_feed:
                         li a0, LCD_CMD_CLEAR                 ; clear display
                         la t0, lcd_line_pos                  ; stores line pos 0
-                        sw x0, [t0]
+                        sw zero, [t0]
                         j _write_data
 
 _write_carriage_return:
