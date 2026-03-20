@@ -69,8 +69,17 @@ TIMER_TICKS_PER_SEC            EQU 1_000_000      ; Number of timer ticks per se
 TIMER_INIT_FREE_RUNNING        EQU 0x3            ; Enabled, free running, modulus, no interrupt
 
 ; EXTERNAL INTERRUPTS
-INTERRUPT_TIMER                EQU 0x10           ; Timer interrupt (bit 4)
-INTERRUPT_BUTTON               EQU 0x20           ; Button interrupt (bit 5)
+MASK_INTERRUPT_USER1           EQU 0x01           ; (bit 0)
+MASK_INTERRUPT_USER2           EQU 0x02           ; (bit 1)
+MASK_INTERRUPT_USER3           EQU 0x04           ; (bit 2)
+MASK_INTERRUPT_USER4           EQU 0x08           ; (bit 3)
+MASK_INTERRUPT_TIMER           EQU 0x10           ; Timer reached terminal count (bit 4)
+MASK_INTERRUPT_BUTTON          EQU 0x20           ; Top left button pressed (bit 5)
+MASK_INTERRUPT_VIDEO1          EQU 0x40           ; Display vertical sync (bit 6)
+MASK_INTERRUPT_VIDEO2          EQU 0x80           ; (bit 7)
+MASK_INTERRUPT_SERIAL_TX       EQU 0x100          ; Serial available for writing (bit 8)
+MASK_INTERRUPT_SERIAL_RX       EQU 0x200          ; Serial has byte(s) waiting (bit 9)
+MASK_INTERRUPT_SERIAL_ERROR    EQU 0x400          ; Serial has overrun error (bit 10)
 
 ; INTERRUPT CONTROLLER
 OFFSET_INTERRUPT_INPUT         EQU 0x400          ; RO Raw signal (32 bits)

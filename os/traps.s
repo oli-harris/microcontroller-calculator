@@ -1,7 +1,9 @@
 ; -----------------------------
 ;         Trap Handlers
 ;         Oliver Harris
-;
+;  Designed to be modular and extensible, with most traps not handled by default.
+;  Interrupts are handled asynchronously and preserve all registers,
+;  while exceptions are handled synchronously and do not preserve a registers
 ;  Last Modified: 20/03/2026
 ;
 ; -----------------------------
@@ -9,8 +11,6 @@
 ; --- HANDLE TRAPS ---
 ; m_handler
 ; Purpose: Handles interrupts (async) and exceptions (sync).
-;          Interrupts preserve all modified registers,
-;          Exceptions do not preserve a registers.
 ; Preserves: ra, sp, t0, t1, t2
 m_handler                    csrrw sp, MSCRATCH, sp                    ; Save user sp, use machine sp
                              subi sp, sp, 16                           ; Push working registers
@@ -87,18 +87,26 @@ exception_table              defw trap_handler_halt                    ;  0 Inst
 ; Purpose: Default handler, does nothing and returns to user program
 trap_handler_ignore          j m_handler_end                           ; used as breakpoint for debugging
 
-; trap_handler_external_interrupt
-; Purpose: Handle external interrupts
-trap_handler_ex_interrupt    j m_handler_end
-
-trap_handler_ex_debug        li t0, HARDWARE_BASE_ADDRESS
-                             lw a0, OFFSET_INTERRUPT_INPUT[t0]
-                             lw a1, OFFSET_INTERRUPT_ENABLE[t0]
-                             lw a2, OFFSET_INTERRUPT_REQUESTS[t0]
-                             lw a3, OFFSET_INTERRUPT_MODE[t0]
-                             lw a4, OFFSET_INTERRUPT_EDGE_CLEAR[t0]
-                             lw a6, OFFSET_INTERRUPT_OUTPUT[t0]
+trap_handler_ex_debug        li t1, HARDWARE_BASE_ADDRESS
+                             lw a0, OFFSET_INTERRUPT_INPUT[t1]
+                             lw a1, OFFSET_INTERRUPT_ENABLE[t1]
+                             lw a2, OFFSET_INTERRUPT_REQUESTS[t1]
+                             lw a3, OFFSET_INTERRUPT_MODE[t1]
+                             lw a4, OFFSET_INTERRUPT_EDGE_CLEAR[t1]
+                             lw a5, OFFSET_INTERRUPT_OUTPUT[t1]
                              j .
+
+
+; trap_handler_external_interrupt
+; Purpose: simple handler for only timer interrupt
+trap_handler_ex_interrupt    li t1, HARDWARE_BASE_ADDRESS
+                             lw t0, OFFSET_INTERRUPT_REQUESTS[t1]      ; t0 = pending interrupts
+
+                             li t1, MASK_INTERRUPT_TIMER               ; Check timer interrupt
+                             andi t1, t1, t0
+                             bnez t1, interrupt_timer
+
+                             j m_handler_end
 
 
 ; --- Exception Handlers ---

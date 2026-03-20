@@ -29,9 +29,9 @@ m_init    li t0, MSTATUS_MPP_MACHINE            ; Clear MPP bits in status
           csrw MIE, t0
           li t0, MSTATUS_MIE                    ; Enable globally machine interrupts
           csrs MSTATUS, t0
-          la t1, EXTERNAL_INTERRUPTS            ; Enable specified external interrupts
-          li t0, HARDWARE_BASE_ADDRESS
-          sw t1, OFFSET_INTERRUPT_ENABLE[t0]
+          la t0, EXTERNAL_INTERRUPTS            ; Enable specified external interrupts
+          li t1, HARDWARE_BASE_ADDRESS
+          sw t0, OFFSET_INTERRUPT_ENABLE[t1]
 
           mret                                  ; Start program in user mode
 
