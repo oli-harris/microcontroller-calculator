@@ -2,12 +2,17 @@
 ;      OS Global Constants
 ;        Oliver Harris
 ;
-;  Last Modified: 10/03/2026
+;  Last Modified: 20/03/2026
 ;
 ; -----------------------------
 
 MSTACK_SIZE                    EQU 32 * 4         ; 32 words
 USER_BASE_ADDRESS              EQU 0x0004_0000    ; (65,536 words)
+
+; --- CSR Bits ---
+MSTATUS_MPP_MACHINE            EQU 0x1800         ; MPP bits (bits 12 & 11)
+MSTATUS_MIE                    EQU 0x8            ; Machine Interrupt Enable (bit 3)
+MIE_EXTERNAL                   EQU 0x800          ; External Interrupt Enable (bit 11)
 
 ; --- ECALLS ---
 ECALL_MAX                      EQU 6              ; number of supported ecalls
@@ -62,3 +67,16 @@ TIMER_ENABLE_FLAG              EQU 0x1            ; Timer enable = bit 0
 
 TIMER_TICKS_PER_SEC            EQU 1_000_000      ; Number of timer ticks per second
 TIMER_INIT_FREE_RUNNING        EQU 0x3            ; Enabled, free running, modulus, no interrupt
+
+; EXTERNAL INTERRUPTS
+INTERRUPT_TIMER                EQU 0x10           ; Timer interrupt (bit 4)
+INTERRUPT_BUTTON               EQU 0x20           ; Button interrupt (bit 5)
+
+; INTERRUPT CONTROLLER
+OFFSET_INTERRUPT_INPUT         EQU 0x400          ; RO Raw signal (32 bits)
+OFFSET_INTERRUPT_ENABLE        EQU 0x404          ; RW enable masks per input (32 bits)
+OFFSET_INTERRUPT_REQUESTS      EQU 0x408          ; RO pending bits  (32 bits)
+OFFSET_INTERRUPT_MODE          EQU 0x40C          ; RW per input 0 = level, 1 = edge-sticky (32 bits)
+OFFSET_INTERRUPT_EDGE_CLEAR    EQU 0x410          ; RW read to view, write 1 to clear (32 bits)
+OFFSET_INTERRUPT_EDGE_SET      EQU 0x414          ; WO edge set (32 bits)
+OFFSET_INTERRUPT_OUTPUT        EQU 0x41C          ; RO Status = bit 0 (32 bits)

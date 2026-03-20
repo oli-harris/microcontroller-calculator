@@ -2,98 +2,148 @@
 ;         Trap Handlers
 ;         Oliver Harris
 ;
-;  Last Modified: 10/03/2026
+;  Last Modified: 20/03/2026
 ;
 ; -----------------------------
 
 ; --- HANDLE TRAPS ---
 ; m_handler
-; Purpose: Use jump table to call correct handler for trap cause, then return to user level
-; Preserves: ra, sp, s0, s1
-m_handler             csrrw sp, MSCRATCH, sp              ; Save user sp, use machine sp
-                      subi sp, sp, 12                     ; Push working registers
-                      sw s1, 8[sp]
-                      sw s0, 4[sp]
-                      sw ra, [sp]
+; Purpose: Handles interrupts (async) and exceptions (sync).
+;          Interrupts preserve all modified registers,
+;          Exceptions do not preserve a registers.
+; Preserves: ra, sp, t0, t1, t2
+m_handler                    csrrw sp, MSCRATCH, sp                    ; Save user sp, use machine sp
+                             subi sp, sp, 16                           ; Push working registers
+                             sw t2, 12[sp]
+                             sw t1, 8[sp]
+                             sw t0, 4[sp]
+                             sw ra, [sp]
 
-                      csrr t0, MCAUSE                     ; t0 = Cause of exception
-                      andi t0, t0, 0xF                    ; Guarantee in range
-                      la t1, trap_table                   ; t1 = pointer to table
-                      slli t0, t0, 2                      ; Multiply cause to word offset
-                      add t1, t0, t1                      ; t0 = pointer to index in table
-                      lw t1, [t1]
-                      jalr t1                             ; Call exception handler
+                             csrr t0, MCAUSE                           ; t0 = Cause of exception
+                             bgez t0, exceptions_handler               ; branch if MSB bit clear
 
-                      csrrw t0, MEPC, t0                  ; Find the trapping instruction PC
-                      addi t0, t0, 4                      ; RA + 4 for ecall (temporary)
-                      csrrw t0, MEPC, t0                  ; Swap back in
-                      lw ra, [sp]                         ; Pop working registers
-                      lw s0, 4[sp]
-                      lw s1, 8[sp]
-                      addi sp, sp, 12
-                      csrrw sp, MSCRATCH, sp              ; Save machine sp, use user sp
-                      mret                                ; Return to user level
+interrupt_handler            andi t0, t0, 0xF                          ; Clear upper bits
+                             li t1, 11
+                             bgtu t0, t1, trap_handler_halt            ; branch if invalid cause
+                             la t1, interrupt_table                    ; t1 = pointer to table
+                             slli t0, t0, 2                            ; Multiply cause to word offset
+                             add t0, t0, t1                            ; t0 = pointer to index in table
+                             lw t0, [t0]
+                             jalr t0                                   ; Call interrupt handler
+                             j m_handler_end
 
+exceptions_handler           andi t0, t0, 0xF                          ; Guarantee in range
+                             la t1, exception_table                    ; t1 = pointer to table
+                             slli t0, t0, 2                            ; Multiply cause to word offset
+                             add t0, t0, t1                            ; t0 = pointer to index in table
+                             lw t0, [t0]
+                             jalr t0                                   ; Call exception handler
 
-trap_table            defw trap_handler_halt              ;  0 Instruction address misaligned
-                      defw trap_handler_halt              ;  1 Instruction access fault
-                      defw trap_handler_halt              ;  2 Illegal instruction
-                      defw trap_handler_halt              ;  3 Breakpoint
-                      defw trap_handler_halt              ;  4 Load address misaligned
-                      defw trap_handler_halt              ;  5 Load access fault
-                      defw trap_handler_halt              ;  6 Store address misaligned
-                      defw trap_handler_halt              ;  7 Store access fault
-                      defw trap_handler_ecall             ;  8 Environment call from U-mode
-                      defw trap_handler_ecall             ;  9 Environment call from S-mode
-                      defw trap_handler_halt              ; 10 Reserved
-                      defw trap_handler_halt              ; 11 Environment call from M-mode
-                      defw trap_handler_halt              ; 12 Instruction page fault
-                      defw trap_handler_halt              ; 13 Load page fault
-                      defw trap_handler_halt              ; 14 Reserved for future standard use
-                      defw trap_handler_halt              ; 15 Store page fault
+                             csrrw t0, MEPC, t0                        ; Find the trapping instruction PC
+                             addi t0, t0, 4                            ; RA + 4 for ecall (temporary)
+                             csrrw t0, MEPC, t0                        ; Swap back in
+
+m_handler_end                lw ra, [sp]                               ; Pop working registers
+                             lw t0, 4[sp]
+                             lw t1, 8[sp]
+                             lw t2, 12[sp]
+                             addi sp, sp, 16
+                             csrrw sp, MSCRATCH, sp                    ; Save machine sp, use user sp
+                             mret                                      ; Return to user level
+
+interrupt_table              defw trap_handler_ignore                  ; 0 User software interrupt
+                             defw trap_handler_ignore                  ; 1 Supervisor software interrupt
+                             defw trap_handler_ignore                  ; 2
+                             defw trap_handler_ignore                  ; 3 Machine software interrupt
+                             defw trap_handler_ignore                  ; 4 User timer interrupt
+                             defw trap_handler_ignore                  ; 5 Supervisor timer interrupt
+                             defw trap_handler_ignore                  ; 6
+                             defw trap_handler_ignore                  ; 7 Machine timer interrupt
+                             defw trap_handler_ignore                  ; 8 User external interrupt
+                             defw trap_handler_ignore                  ; 9 Supervisor external interrupt
+                             defw trap_handler_ignore                  ; 10
+                             defw trap_handler_ex_interrupt            ; 11 Machine external interrupt
+
+exception_table              defw trap_handler_halt                    ;  0 Instruction address misaligned
+                             defw trap_handler_halt                    ;  1 Instruction access fault
+                             defw trap_handler_halt                    ;  2 Illegal instruction
+                             defw trap_handler_halt                    ;  3 Breakpoint
+                             defw trap_handler_halt                    ;  4 Load address misaligned
+                             defw trap_handler_halt                    ;  5 Load access fault
+                             defw trap_handler_halt                    ;  6 Store address misaligned
+                             defw trap_handler_halt                    ;  7 Store access fault
+                             defw trap_handler_ecall                   ;  8 Environment call from U-mode
+                             defw trap_handler_ecall                   ;  9 Environment call from S-mode
+                             defw trap_handler_halt                    ; 10
+                             defw trap_handler_halt                    ; 11 Environment call from M-mode
+                             defw trap_handler_halt                    ; 12 Instruction page fault
+                             defw trap_handler_halt                    ; 13 Load page fault
+                             defw trap_handler_halt                    ; 14
+                             defw trap_handler_halt                    ; 15 Store page fault
+
+; --- Interrupt Handlers -- -
+
+; trap_handler_ignore
+; Purpose: Default handler, does nothing and returns to user program
+trap_handler_ignore          j m_handler_end                           ; used as breakpoint for debugging
+
+; trap_handler_external_interrupt
+; Purpose: Handle external interrupts
+trap_handler_ex_interrupt    j m_handler_end
+
+trap_handler_ex_debug        li t0, HARDWARE_BASE_ADDRESS
+                             lw a0, OFFSET_INTERRUPT_INPUT[t0]
+                             lw a1, OFFSET_INTERRUPT_ENABLE[t0]
+                             lw a2, OFFSET_INTERRUPT_REQUESTS[t0]
+                             lw a3, OFFSET_INTERRUPT_MODE[t0]
+                             lw a4, OFFSET_INTERRUPT_EDGE_CLEAR[t0]
+                             lw a6, OFFSET_INTERRUPT_OUTPUT[t0]
+                             j .
 
 
 ; --- Exception Handlers ---
 
 ; trap_handler_halt
-; Halts program, displays cause in t0
-trap_handler_halt     srli t0, t0, 2
-                      j .                                 ; halts
+; Purpose: Halts program, displays mcause, mstatus, mepc for debugging
+trap_handler_halt            csrr t0, MCAUSE                           ; display debug info
+                             csrr t1, MSTATUS
+                             csrr t2, MEPC
+                             j .                                       ; halts
 
 ; trap_handler_reset
-; Re-initialise program (doesn't clear memory/registers)
-trap_handler_reset    j m_init
-
+; Purpose: Re-initialise program (doesn't clear memory/registers)
+trap_handler_reset           j m_init
 
 ; trap_handler_ecall
-; Passes ecall to correct handler
+; Purpose: Passes ecall to correct handler
 ; Input: a0 = function argument, a7 = ecall type
-trap_handler_ecall    subi sp, sp, 4
-                      sw ra, [sp]
+; Modifies: t0, t1
+trap_handler_ecall           subi sp, sp, 4
+                             sw ra, [sp]
 
-                      li t1, ECALL_MAX
-                      bgeu a7, t1, trap_handler_halt      ; halt if unknown ecall, preserves cause
-                      la t0, ecall_table
-                      slli t1, a7, 2
-                      add t0, t0, t1
-                      lw t0, [t0]
-                      jalr t0
+                             li t1, ECALL_MAX
+                             bgeu a7, t1, trap_handler_halt            ; halt if unknown ecall, preserves cause
+                             la t0, ecall_table
+                             slli t1, a7, 2
+                             add t0, t0, t1
+                             lw t0, [t0]
+                             jalr t0
 
-                      lw ra, [sp]
-                      addi sp, sp, 4
-                      ret
+                             lw ra, [sp]
+                             addi sp, sp, 4
+                             ret
 
 
-ecall_table           defw ecall_lcd_write                ; 0 = write data char to lcd
-                      defw ecall_set_leds                 ; 1 = set LEDs
-                      defw ecall_changed_buttons          ; 2 = detect changed buttons
-                      defw ecall_timer_start              ; 3 = start timer
-                      defw ecall_timer_stop               ; 4 = stop timer
-                      defw ecall_timer_check_increment    ; 5 = check timer compare flag
+ecall_table                  defw ecall_lcd_write                      ; 0 = write data char to lcd
+                             defw ecall_set_leds                       ; 1 = set LEDs
+                             defw ecall_changed_buttons                ; 2 = detect changed buttons
+                             defw ecall_timer_start                    ; 3 = start timer
+                             defw ecall_timer_stop                     ; 4 = stop timer
+                             defw ecall_timer_check_increment          ; 5 = check timer compare flag
 
 
 ; --- Include ECALL Handlers ---
-                      include ecalls/lcd.s
-                      include ecalls/leds.s
-                      include ecalls/buttons.s
-                      include ecalls/timer.s
+                             include ecalls/lcd.s
+                             include ecalls/leds.s
+                             include ecalls/buttons.s
+                             include ecalls/timer.s
