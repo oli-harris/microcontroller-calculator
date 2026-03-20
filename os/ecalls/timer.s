@@ -48,6 +48,7 @@ ecall_timer_stop_end    ret
 ; Purpose: Check if timer compare flag is set, and resets it
 ; Input: None
 ; Output: a0: 1 if flag is set, 0 otherwise (bit 0)
+; Modifies: t0, t1, a0
 ecall_timer_check_increment:
                         la t0, HARDWARE_BASE_ADDRESS
                         lw t1, OFFSET_TIMER_STATUS[t0]       ; read timer bit 31 -> a0

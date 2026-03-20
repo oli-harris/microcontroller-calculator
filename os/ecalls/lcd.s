@@ -6,7 +6,7 @@
 ; Input: a0 = data to write (bits 0:7)
 ;             0 for data, 1 for command (bit 8)
 ; Output: None
-; Modifies: a0, a1, t0, t1, t2
+; Modifies: a0, a2, t0, t1, t2
 ; Requires: delay.s
 ;
 ; Last modified: 10/03/26

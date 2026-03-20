@@ -5,7 +5,7 @@
 ; Purpose: Reads buttons and detects rising edges
 ; Input: None
 ; Output: a0 = button with changed value on rising edge
-; Modifies: t0, t1, t2
+; Modifies: t0, t1, t2, a0
 ;
 ; Last modified: 10/03/26
 ;

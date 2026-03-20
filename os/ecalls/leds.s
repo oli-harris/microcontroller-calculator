@@ -5,7 +5,7 @@
 ; Purpose: Enables/disables LEDs according to input
 ; Input: a0 = LED Colour (8 bits)
 ; Output: None
-; Modifies: t0
+; Modifies: t0, a0
 ;
 ; Last modified: 03/03/26
 ;
