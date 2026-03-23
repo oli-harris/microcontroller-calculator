@@ -11,10 +11,15 @@
 ; --------------------------------------------
 
 ; --- CONSTANTS ---
-          include os_globals.s
+          include globals.s
 
 
 ; --- INITIALISATION ---
+; m_init
+; Purpose: Initialize machine, set up stacks, reset peripherals, enable interrupts,
+;          jump to user code
+;          Clears registers before jumping to user code
+
 m_init    li t0, MSTATUS_MPP_MACHINE            ; Clear MPP bits in status
           csrc MSTATUS, t0
           la t0, m_handler                      ; Define trap handler
@@ -25,6 +30,9 @@ m_init    li t0, MSTATUS_MPP_MACHINE            ; Clear MPP bits in status
           la ra, start                          ; Set return to start of program
           csrw MEPC, ra
 
+          call peripheral_reset                 ; Reset peripherals
+
+
           li t0, MIE_EXTERNAL                   ; Enable external interrupts
           csrw MIE, t0
           li t0, MSTATUS_MIE                    ; Enable globally machine interrupts
@@ -33,7 +41,17 @@ m_init    li t0, MSTATUS_MPP_MACHINE            ; Clear MPP bits in status
           li t1, HARDWARE_BASE_ADDRESS
           sw t0, OFFSET_INTERRUPT_ENABLE[t1]
 
+          li t0, 0                              ; Clear registers for user program
+          li t1, 0
           mret                                  ; Start program in user mode
+
+
+peripheral_reset:
+          la t0, HARDWARE_BASE_ADDRESS          ; Reset timer status
+          li t1, 0
+          sw t1, OFFSET_TIMER_STATUS[t0]
+          ret
+
 
 ; --- MACHINE INCLUDES ---
           include traps.s

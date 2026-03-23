@@ -34,6 +34,18 @@ MASK_BUTTON_2                  EQU 0b0010
 MASK_BUTTON_3                  EQU 0b0100
 MASK_BUTTON_4                  EQU 0b1000
 
+LEDS_HALF_RAINBOW              EQU 0b1111
+LEDS_HALF_RED                  EQU 0b0001
+LEDS_HALF_ORANGE               EQU 0b0010
+LEDS_HALF_GREEN                EQU 0b0100
+LEDS_HALF_BLUE                 EQU 0b1000
+
+LEDS_RAINBOW                   EQU 0b11111111
+LEDS_RED                       EQU 0b00010001
+LEDS_ORANGE                    EQU 0b00100010
+LEDS_GREEN                     EQU 0b01000100
+LEDS_BLUE                      EQU 0b10001000
+
 ; LCD
 OFFSET_LCD_BUS                 EQU 0x100          ; (8 bits)
 OFFSET_LCD_STATUS              EQU 0x101          ; (4 bits)
@@ -53,20 +65,11 @@ OFFSET_TIMER_SET               EQU 0x214          ; Control Set (32 bits)
 
 TIMER_COMPARE_FLAG             EQU 0x1F           ; (bit 31)
 TIMER_TERMINAL_COUNT_CLR       EQU 0x10           ; Clear terminal count (bit 4)
-TIMER_ENABLE_FLAG              EQU 0x1            ; Timer enable = bit 0
+TIMER_INTERRUPT_FLAG           EQU 0x8            ; Interrupt flag (bit 3)
+TIMER_ENABLE_FLAG              EQU 0x1            ; Enable timer (bit 0)
 
 TIMER_TICKS_PER_SEC            EQU 1_000_000      ; Number of timer ticks per second
-TIMER_INIT_FREE_RUNNING        EQU 0x3            ; Enabled, free running, modulus, no interrupt
-TIMER_ENABLE_FLAG              EQU 0x1            ; Timer enable = bit 0
-
-TIMER_TICKS_PER_SEC            EQU 1_000_000      ; Number of timer ticks per second
-TIMER_INIT_FREE_RUNNING        EQU 0x3            ; Enabled, free running, modulus, no interrupt
-TIMER_TICKS_PER_SEC            EQU 1_000_000      ; Number of timer ticks per second
-TIMER_INIT_FREE_RUNNING        EQU 0x3            ; Enabled, free running, modulus, no interrupt
-TIMER_ENABLE_FLAG              EQU 0x1            ; Timer enable = bit 0
-
-TIMER_TICKS_PER_SEC            EQU 1_000_000      ; Number of timer ticks per second
-TIMER_INIT_FREE_RUNNING        EQU 0x3            ; Enabled, free running, modulus, no interrupt
+TIMER_INIT_VALUE               EQU 0xB            ; Enabled, Modulus, Free Running, Interrupts Disabled
 
 ; EXTERNAL INTERRUPTS
 MASK_INTERRUPT_USER1           EQU 0x01           ; (bit 0)
