@@ -4,9 +4,10 @@
 ;
 ;  Last Modified: 20/03/2026
 ;
-;  Requires: STACK_SIZE (words)
-;            EXTERNAL_INTERRUPTS (bits to enable)
-;            start label
+; Define the following in the user program to configure the OS:
+;  - STACK_SIZE (words)
+;  - EXTERNAL_INTERRUPTS (bits to enable)
+;  - start (entry point of user code)
 ;
 ; --------------------------------------------
 
