@@ -4,7 +4,7 @@
 ;  Designed to be modular and extensible, with most traps not handled by default.
 ;  Interrupts are handled asynchronously and preserve all registers,
 ;  while exceptions are handled synchronously and do not preserve a registers
-;  Last Modified: 20/03/2026
+;  Last Modified: 23/03/2026
 ;
 ; -----------------------------
 
@@ -102,10 +102,12 @@ trap_handler_ex_debug        li t1, HARDWARE_BASE_ADDRESS
 trap_handler_ex_interrupt    li t1, HARDWARE_BASE_ADDRESS
                              lw t0, OFFSET_INTERRUPT_REQUESTS[t1]      ; t0 = pending interrupts
 
-                             li t1, MASK_INTERRUPT_TIMER               ; Check timer interrupt
-                             andi t1, t1, t0
-                             bnez t1, interrupt_timer
+                             li t1, MASK_INTERRUPT_TIMER               ; Skip other interrupts
+                             and t1, t1, t0
+                             beqz t1, m_handler_end
 
+                             la t0, interrupt_timer                    ; Call timer interrupt handler
+                             jalr t0
                              j m_handler_end
 
 
@@ -150,8 +152,6 @@ ecall_table                  defw ecall_lcd_write                      ; 0 = wri
                              defw ecall_timer_check_increment          ; 5 = check timer compare flag
 
 
-; --- Include ECALL Handlers ---
-                             include ecalls/lcd.s
-                             include ecalls/leds.s
-                             include ecalls/buttons.s
-                             include ecalls/timer.s
+; --- Includes ---
+                             include ecalls.s
+                             include interrupts.s
