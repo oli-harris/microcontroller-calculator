@@ -167,3 +167,17 @@ ecall_timer_check_increment:
                          sw t1, OFFSET_TIMER_CLEAR[t0]
                          ret
 
+; --- Keyboard Ecalls ---
+; Last modified: 27/03/26
+; Improvements: Could implement more complex keyboard buffer
+
+; ecall_get_key
+; Purpose: Pop key from keys buffer, return
+; Key: 0 for no key, else 1-16
+ecall_get_key:
+                         la t0, KEYS_BUFFER
+                         lb a0, [t0]                           ; a0 = key at front of buffer
+                         beqz a0, ecall_get_key_end
+;  sb zero, [t0]                         ; clear key from buffer
+
+ecall_get_key_end        ret

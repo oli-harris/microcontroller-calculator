@@ -6,7 +6,7 @@
 ;
 ; Define the following in the user program to configure the OS:
 ;  - STACK_SIZE (words)
-;  - EXTERNAL_INTERRUPTS (bits to enable)
+;  - EXTERNAL_INTERRUPTS (interrupts to enable)
 ;  - start (entry point of user code)
 ;
 ; --------------------------------------------

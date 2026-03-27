@@ -4,7 +4,8 @@
 ;  Designed to be modular and extensible, with most traps not handled by default.
 ;  Interrupts are handled asynchronously and preserve all registers,
 ;  while exceptions are handled synchronously and do not preserve a registers
-;  Last Modified: 23/03/2026
+;
+;  Last Modified: 28/03/2026
 ;
 ; -----------------------------
 
@@ -150,6 +151,7 @@ ecall_table                  defw ecall_lcd_write                      ; 0 = wri
                              defw ecall_timer_start                    ; 3 = start timer
                              defw ecall_timer_stop                     ; 4 = stop timer
                              defw ecall_timer_check_increment          ; 5 = check timer compare flag
+                             defw ecall_get_key                        ; 6 = get key from keys buffer
 
 
 ; --- Includes ---
