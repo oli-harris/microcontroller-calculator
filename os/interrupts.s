@@ -29,10 +29,10 @@ interrupt_timer:
                             ret
 
 ; interrupt_button
-; Purpose: Handles button interrupt, for debug
+; Note: Stub handler
 interrupt_button:
-                            call keyboard_scanner
                             ret
+
 
 KEYS_BUFFER                 DEFS 16                              ; FIFO queue to store pressed keys
 KEYS_BUFFER_SIZE            EQU 16
@@ -46,6 +46,7 @@ KEYS_MAX                    EQU 5
 
 ; keyboard_scanner
 ; Purpose: Scans keyboard, updates counters, appends pressed key to keys buffer
+;
 keyboard_scanner:
                             subi sp, sp, 4
                             sw ra, [sp]
@@ -58,13 +59,13 @@ keyboard_scanner:
                             li t1, 0                             ; t1 = current row
 keyboard_rows_loop          li t2, MASK_KEYBOARD_ROWS            ; set all rows inactive
                             sw t2, OFFSET_PIO_CLEAR[t0]
-nop
-nop
+
+                            li a2, 2
+                            call delay_loop
+
                             li t2, KEYBOARD_ROW_START            ; set current row active
                             sll t2, t2, t1
                             sw t2, OFFSET_PIO_SET[t0]
-nop
-nop
                             lw t2, OFFSET_PIO_DATA[t0]           ; t2 = buttons pressed in current row
                             srli t2, t2, 12
 

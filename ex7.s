@@ -12,6 +12,9 @@ start:
                        li a7, ECALL_TIMER_START
                        ecall
 
+                       li a0, '\f'
+                       call write_char
+
 main_loop              j poll_key
                        j main_loop
 

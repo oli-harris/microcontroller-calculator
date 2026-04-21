@@ -16,12 +16,6 @@
 
 ; --- Library Specific Constants ---
 
-LCD_CMD_LEFT            EQU 0x110                            ; Backspace
-LCD_CMD_RIGHT           EQU 0x114                            ; Tab
-LCD_CMD_NEWLINE         EQU 0x1C0                            ; Line feed (down line)
-LCD_CMD_VTAB            EQU 0x180                            ; Vertical tab (up line)
-LCD_CMD_CLEAR           EQU 0x101                            ; Form feed (clear display, reset cursor)
-
 ASCII_SPECIALS_START    EQU 0x08                             ; Starts at backspace
 ASCII_SPECIALS_END      EQU 0x0D                             ; Ends at carriage return
 

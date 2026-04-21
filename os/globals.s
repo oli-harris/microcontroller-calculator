@@ -52,10 +52,18 @@ OFFSET_LCD_BUS                 EQU 0x100                  ; (8 bits)
 OFFSET_LCD_STATUS              EQU 0x101                  ; (4 bits)
 DELAY_PULSE                    EQU 5                      ; pulse width delay (>= 20 cycles)
 DELAY_SEPARATE                 EQU 12                     ; separate pulses (>= 48 cycles)
+
 LCD_RW                         EQU 0b0000_0001            ; R/W = 1 for read, 0 for write
 LCD_RS                         EQU 0b0000_0010            ; RS
 LCD_ENABLE_BUS                 EQU 0b0000_0100            ; E = 1 to enable bus
 LCD_BUSY_FLAG                  EQU 0b1000_0000            ; Busy flag (bit 7 of status)
+
+LCD_CMD_LEFT                   EQU 0x110                  ; Backspace
+LCD_CMD_RIGHT                  EQU 0x114                  ; Tab
+LCD_CMD_NEWLINE                EQU 0x1C0                  ; Line feed (down line)
+LCD_CMD_VTAB                   EQU 0x180                  ; Vertical tab (up line)
+LCD_CMD_CLEAR                  EQU 0x101                  ; Form feed (clear display, reset cursor)
+
 
 ; TIMER
 OFFSET_TIMER_COUNTER           EQU 0x200                  ; Counter value (32 bits)

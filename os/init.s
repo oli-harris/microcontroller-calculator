@@ -28,11 +28,10 @@ m_init    li t0, MSTATUS_MPP_MACHINE            ; Clear MPP bits in status
           la sp, MSTACK_END                     ; Define machine stack pointer (stack grows down)
           csrw MSCRATCH, sp
           la sp, USTACK_END                     ; Switch to user stack pointer (stack grows down)
-          la ra, start                          ; Set return to start of program
-          csrw MEPC, ra
 
-          call peripheral_reset                 ; Reset peripherals
-
+          la t0, HARDWARE_BASE_ADDRESS          ; Reset timer status
+          li t1, 0
+          sw t1, OFFSET_TIMER_STATUS[t0]
 
           li t0, MIE_EXTERNAL                   ; Enable external interrupts
           csrw MIE, t0
@@ -44,14 +43,12 @@ m_init    li t0, MSTATUS_MPP_MACHINE            ; Clear MPP bits in status
 
           li t0, 0                              ; Clear registers for user program
           li t1, 0
-          mret                                  ; Start program in user mode
+
+          la ra, start                          ; Start program in user mode
+          csrw MEPC, ra
+          mret
 
 
-peripheral_reset:
-          la t0, HARDWARE_BASE_ADDRESS          ; Reset timer status
-          li t1, 0
-          sw t1, OFFSET_TIMER_STATUS[t0]
-          ret
 
 
 ; --- MACHINE INCLUDES ---

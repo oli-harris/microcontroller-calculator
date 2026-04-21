@@ -88,6 +88,9 @@ exception_table              defw trap_handler_halt                    ;  0 Inst
 ; Purpose: Default handler, does nothing and returns to user program
 trap_handler_ignore          j m_handler_end                           ; used as breakpoint for debugging
 
+
+; trap_handler_ex_debug
+; Purpose: Debug handler for external interrupts, displays interrupt controller state
 trap_handler_ex_debug        li t1, HARDWARE_BASE_ADDRESS
                              lw a0, OFFSET_INTERRUPT_INPUT[t1]
                              lw a1, OFFSET_INTERRUPT_ENABLE[t1]
@@ -126,7 +129,7 @@ trap_handler_halt            csrr t0, MCAUSE                           ; display
 trap_handler_reset           j m_init
 
 ; trap_handler_ecall
-; Purpose: Passes ecall to correct handler
+; Purpose: Passes user ecall to correct handler
 ; Input: a0 = function argument, a7 = ecall type
 ; Modifies: t0, t1
 trap_handler_ecall           subi sp, sp, 4
