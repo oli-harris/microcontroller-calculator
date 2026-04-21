@@ -56,7 +56,7 @@ m_init    li t0, MSTATUS_MPP_MACHINE            ; Clear MPP bits in status
 
 
 ; --- MACHINE STACK
-          MSTACK DEFS MSTACK_SIZE
+          MSTACK DEFS MSTACK_SIZE * 4
 MSTACK_END
 
 

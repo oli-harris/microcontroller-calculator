@@ -6,7 +6,7 @@
 ;
 ; -----------------------------
 
-MSTACK_SIZE                    EQU 32 * 4                 ; 32 words
+MSTACK_SIZE                    EQU 64                     ; 64 words
 USER_BASE_ADDRESS              EQU 0x0004_0000            ; (65,536 words)
 
 ; --- CSR Bits ---

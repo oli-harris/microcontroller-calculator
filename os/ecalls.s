@@ -169,16 +169,16 @@ ecall_timer_check_increment:
 
 ; --- Keyboard Ecalls ---
 ; Last modified: 27/03/26
-; Improvements: Could implement more complex keyboard buffer
 
 ; ecall_get_key
-; Purpose: Pop key from keys buffer, return
-; Key: 0 for no key, else 1-16
-; Output: a0 = key at front of buffer
-ecall_get_key:
-                         la t0, KEYS_BUFFER
-                         lb a0, [t0]                           ; a0 = key at front of buffer
-                         beqz a0, ecall_get_key_end
-                         sb zero, [t0]                         ; clear key from buffer
+; Purpose: Get least recently pressed key, or -1 if no key
+;          (wrapper for key_buffer_pop so agnostic to implementation)
+; Output: a0 = -1 for no key, else 0-15
+ecall_get_key:           subi sp, sp, 4
+                         sw ra, [sp]
 
-ecall_get_key_end        ret
+                         call key_buffer_pop
+
+                         lw ra, [sp]
+                         addi sp, sp, 4
+                         ret

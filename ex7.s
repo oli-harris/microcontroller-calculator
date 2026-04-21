@@ -1,11 +1,7 @@
                        include os/init.s
-STACK_SIZE             EQU 32
+STACK_SIZE             EQU 64
 EXTERNAL_INTERRUPTS    EQU MASK_INTERRUPT_TIMER | MASK_INTERRUPT_BUTTON           ; Enable timer and button interrupts (bits 4 and 5)
 TIMER_INTERVAL_MS      EQU 2                                                      ; 1 ms
-
-
-                       PREVKEY DEFB 0
-                       align
 
 start:
                        li a0, TIMER_INTERVAL_MS * (TIMER_TICKS_PER_SEC / 1000)
@@ -24,19 +20,16 @@ poll_key:
                        li a7, ECALL_GET_KEY
                        ecall
 
-                       beqz a0, main_loop
-                       subi a0, a0, 1                                             ; convert to 0..15 key index
+                       bltz a0, main_loop
 
-                       la t1, PREVKEY
-                       lb t0, [t1]
-                       beq a0, t0, main_loop
-                       sb a0, [t1]
-
-                       li a1, 1
-                       call write_hex
+                       la t0, KEY_LOOKUP
+                       add t0, t0, a0
+                       lb a0, [t0]
+                       call write_char
 
                        j poll_key
 
+KEY_LOOKUP             defb "*7410852#963\f=-+"
 
 ; Includes
                        include lib/lcd.s
