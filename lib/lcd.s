@@ -8,7 +8,7 @@
 ;         - writing of padded hex values
 ;         - writing of decimal values
 ;
-; Last modified: 09/03/26
+; Last modified: 27/04/26
 ;
 ; Known bugs: \n and \v dont track col position
 ;
@@ -16,18 +16,18 @@
 
 ; --- Library Specific Constants ---
 
-ASCII_SPECIALS_START       EQU 0x08                                         ; Starts at backspace
-ASCII_SPECIALS_END         EQU 0x0D                                         ; Ends at carriage return
+ASCII_SPECIALS_START     EQU 0x08                                         ; Starts at backspace
+ASCII_SPECIALS_END       EQU 0x0D                                         ; Ends at carriage return
 
-DECIMAL_TABLE              defw 1000000000, 100000000, 10000000, 1000000
-                           defw 100000, 10000, 1000, 100, 10, 1
+DECIMAL_TABLE            defw 1000000000, 100000000, 10000000, 1000000
+                         defw 100000, 10000, 1000, 100, 10, 1
 DECIMAL_TABLE_END
 
 
 ; --- Memory ---
 
-lcd_line_pos               defb 0
-                           align
+lcd_line_pos             defb 0
+                         align
 
 
 ; --- Functions ---
@@ -39,20 +39,20 @@ lcd_line_pos               defb 0
 ; Output: None
 ; Modifies: a0, a3, t0, a1
 write_string:
-                           subi sp, sp, 4
-                           sw ra, [sp]
+                         subi sp, sp, 4
+                         sw ra, [sp]
 
-                           mv a3, a0                                        ; a3 stores pointer to pos in str
+                         mv a3, a0                                        ; a3 stores pointer to pos in str
 
-write_string_loop          lb a0, [a3]                                      ; loop chars until reaches null terminator
-                           beqz a0, write_string_end
-                           call write_char
-                           addi a3, a3, 1
-                           j write_string_loop
+write_string_loop        lb a0, [a3]                                      ; loop chars until reaches null terminator
+                         beqz a0, write_string_end
+                         call write_char
+                         addi a3, a3, 1
+                         j write_string_loop
 
-write_string_end           lw ra, [sp]
-                           addi sp, sp, 4
-                           ret
+write_string_end         lw ra, [sp]
+                         addi sp, sp, 4
+                         ret
 
 ; write_hex
 ; Purpose: Outputs 32-bit value to LCD as n nibbles, padded
@@ -61,32 +61,32 @@ write_string_end           lw ra, [sp]
 ; Output: None
 ; Modifies: a0, t0
 write_hex:
-                           subi sp, sp, 12
-                           sw ra, [sp]
-                           sw s0, 4[sp]
-                           sw s1, 8[sp]
+                         subi sp, sp, 12
+                         sw ra, [sp]
+                         sw s0, 4[sp]
+                         sw s1, 8[sp]
 
-                           mv s0, a0                                        ; s0 = original value
-                           li t0, 4
-                           mul s1, a1, t0                                   ; s1 = shift amount
-                           subi s1, s1, 4                                   ; shift of first nibble
+                         mv s0, a0                                        ; s0 = original value
+                         li t0, 4
+                         mul s1, a1, t0                                   ; s1 = shift amount
+                         subi s1, s1, 4                                   ; shift of first nibble
 
-write_hex_nibble           srl a0, s0, s1                                   ; mask off current nibble
-                           andi a0, a0, 0xF
-                           addi a0, a0, '0'                                 ; 0-9
-                           li t0, '9'
-                           bleu a0, t0, _write_hex_call_char                ; preserve ra
-                           addi a0, a0, 'A' - '9' - 1                       ; A-E
-_write_hex_call_char       call write_char
+write_hex_nibble         srl a0, s0, s1                                   ; mask off current nibble
+                         andi a0, a0, 0xF
+                         addi a0, a0, '0'                                 ; 0-9
+                         li t0, '9'
+                         bleu a0, t0, _write_hex_call_char                ; preserve ra
+                         addi a0, a0, 'A' - '9' - 1                       ; A-E
+_write_hex_call_char     call write_char
 
-                           subi s1, s1, 4                                   ; shift to next nibble
-                           bgez s1, write_hex_nibble                        ; loop until all nibbles written
+                         subi s1, s1, 4                                   ; shift to next nibble
+                         bgez s1, write_hex_nibble                        ; loop until all nibbles written
 
-write_hex_end              lw s1, 8[sp]
-                           lw s0, 4[sp]
-                           lw ra, [sp]
-                           addi sp, sp, 12
-                           ret
+write_hex_end            lw s1, 8[sp]
+                         lw s0, 4[sp]
+                         lw ra, [sp]
+                         addi sp, sp, 12
+                         ret
 
 ; write_decimal
 ; Modified version of bcd_convert to write decimal value of a0 to lcd
@@ -94,64 +94,44 @@ write_hex_end              lw s1, 8[sp]
 ; Output: None
 ; Modifies: a0, t0, t1, t2, t4, s0, s1, s2
 ; Preserves: s0, s1, s2
-write_decimal              subi sp, sp, 16
-                           sw ra, [sp]
-                           sw s0, 4[sp]
-                           sw s1, 8[sp]
-                           sw s2, 12[sp]
+write_decimal            subi sp, sp, 16
+                         sw ra, [sp]
+                         sw s0, 4[sp]
+                         sw s1, 8[sp]
+                         sw s2, 12[sp]
 
-                           la s0, DECIMAL_TABLE                             ; Point at conversion table
-                           la s1, DECIMAL_TABLE_END                         ; End of table
-                           mv t0, zero                                      ; 0 until first non-zero digit printed
+                         la s0, DECIMAL_TABLE                             ; Point at conversion table
+                         la s1, DECIMAL_TABLE_END                         ; End of table
+                         mv t0, zero                                      ; 0 until first non-zero digit printed
 
-write_decimal_loop_in      beq s0, s1, write_decimal_done
-                           lw t2, [s0]                                      ; Get next divisor
-                           divu t4, a0, t2                                  ; t4 = next decimal digit
-                           remu a0, a0, t2                                  ; a0 = remainder
+write_decimal_loop_in    beq s0, s1, write_decimal_done
+                         lw t2, [s0]                                      ; Get next divisor
+                         divu t4, a0, t2                                  ; t4 = next decimal digit
+                         remu a0, a0, t2                                  ; a0 = remainder
 
-                           bnez t0, write_decimal_print                     ; Already started output
-                           bnez t4, write_decimal_print                     ; First non-zero digit
-                           li t1, 1
-                           bne t2, t1, write_decimal_skip                   ; Skip leading zeros before units
+                         bnez t0, write_decimal_print                     ; Already started output
+                         bnez t4, write_decimal_print                     ; First non-zero digit
+                         li t1, 1
+                         bne t2, t1, write_decimal_skip                   ; Skip leading zeros before units
 
-write_decimal_print        mv s2, a0                                        ; Preserve remainder across call
-                           mv a0, t4
-                           call write_decimal
-                           mv a0, s2
-                           li t0, 1                                         ; Output has started
-
-write_decimal_skip         addi s0, s0, 4                                   ; Step pointer
-                           j write_decimal_loop_in
-
-write_decimal_done:
-
-                           lw s2, 12[sp]
-                           lw s1, 8[sp]
-                           lw s0, 4[sp]
-                           lw ra, [sp]
-                           addi sp, sp, 16
-                           ret
+write_decimal_print      mv s2, a0                                        ; Preserve remainder across call
+                         addi a0, t4, '0'                                 ; Convert digit to ASCII
+                         li a7, ECALL_LCD_WRITE
+                         ecall
 
 
-; write_digit_decimal
-; Purpose: Outputs single decimal digit to LCD, simpler than write_hex
-; Input: a0 = decimal digit to write (0-9)
-; Output: None
-; Modifies: a0
-write_digit_decimal:
-                           subi sp, sp, 4
-                           sw ra, [sp]
+                         mv a0, s2
+                         li t0, 1                                         ; Output has started
 
-                           li t0, 9                                         ; check valid digit
-                           bgt a0, t0, write_digit_decimal_end
+write_decimal_skip       addi s0, s0, 4                                   ; Step pointer
+                         j write_decimal_loop_in
 
-                           addi a0, a0, '0'                                 ; convert digit to ASCII
-                           li a7, ECALL_LCD_WRITE                           ; ecall write to lcd
-                           ecall
-
-write_digit_decimal_end    lw ra, [sp]
-                           addi sp, sp, 4
-                           ret
+write_decimal_done       lw s2, 12[sp]
+                         lw s1, 8[sp]
+                         lw s0, 4[sp]
+                         lw ra, [sp]
+                         addi sp, sp, 16
+                         ret
 
 ; write_char
 ; Purpose: Outputs character to LCD, interpreting special characters
@@ -160,69 +140,69 @@ write_digit_decimal_end    lw ra, [sp]
 ; Output: None
 ; Modifies: a0, a1, a7, t0, t1
 write_char:
-                           subi sp, sp, 4
-                           sw ra, [sp]
-                           ori a0, a0, WRITE_COMMAND                        ; write command
+                         subi sp, sp, 4
+                         sw ra, [sp]
+                         ori a0, a0, WRITE_COMMAND                        ; write command
 
-                           andi a0, a0, 0xFF                                ; enforce input a0 is ASCII
-                           li t0, ASCII_SPECIALS_END                        ; check if char is a special char
-                           bgtu a0, t0, _write_data
-                           li t0, ASCII_SPECIALS_START
-                           bltu a0, t0, _write_data
-                           la t0, specials_table                            ; lookup special char function
-                           subi a0, a0, ASCII_SPECIALS_START
-                           slli a0, a0, 2
-                           add t0, t0, a0
-                           lw t0, [t0]
-                           jr t0
+                         andi a0, a0, 0xFF                                ; enforce input a0 is ASCII
+                         li t0, ASCII_SPECIALS_END                        ; check if char is a special char
+                         bgtu a0, t0, _write_data
+                         li t0, ASCII_SPECIALS_START
+                         bltu a0, t0, _write_data
+                         la t0, specials_table                            ; lookup special char function
+                         subi a0, a0, ASCII_SPECIALS_START
+                         slli a0, a0, 2
+                         add t0, t0, a0
+                         lw t0, [t0]
+                         jr t0
 
 ; Jump table for special characters handling
-specials_table             defw _write_backspace
-                           defw _write_tab
-                           defw _write_line_feed
-                           defw _write_vertical_tab
-                           defw _write_form_feed
-                           defw _write_carriage_return
+specials_table           defw _write_backspace
+                         defw _write_tab
+                         defw _write_line_feed
+                         defw _write_vertical_tab
+                         defw _write_form_feed
+                         defw _write_carriage_return
 
 _write_backspace:
-                           li a0, LCD_CMD_LEFT                              ; move cursor left
-                           j _write_data
+                         li a0, LCD_CMD_LEFT                              ; move cursor left
+                         j _write_data
 
 
 _write_tab:
-                           li a0, LCD_CMD_RIGHT                             ; move cursor right
-                           j _write_data
+                         li a0, LCD_CMD_RIGHT                             ; move cursor right
+                         j _write_data
 
 _write_line_feed:
-                           li a0, LCD_CMD_NEWLINE                           ; move cursor down
-                           la t0, lcd_line_pos                              ; stores line pos 1
-                           li t1, 1
-                           sw t1, [t0]
-                           j _write_data
+                         li a0, LCD_CMD_NEWLINE                           ; move cursor down
+                         la t0, lcd_line_pos                              ; stores line pos 1
+                         li t1, 1
+                         sw t1, [t0]
+                         j _write_data
 
 _write_vertical_tab:
-                           li a0, LCD_CMD_VTAB                              ; move cursor up
-                           la t0, lcd_line_pos                              ; stores line pos 0
-                           sw zero, [t0]
-                           j _write_data
+                         li a0, LCD_CMD_VTAB                              ; move cursor up
+                         la t0, lcd_line_pos                              ; stores line pos 0
+                         sw zero, [t0]
+                         j _write_data
 
 _write_form_feed:
-                           li a0, LCD_CMD_CLEAR                             ; clear display
-                           la t0, lcd_line_pos                              ; stores line pos 0
-                           sw zero, [t0]
-                           j _write_data
+                         li a0, LCD_CMD_CLEAR                             ; clear display
+                         la t0, lcd_line_pos                              ; stores line pos 0
+                         sw zero, [t0]
+                         j _write_data
 
 _write_carriage_return:
-                           lw t0, lcd_line_pos                              ; check if currently on line 1
-                           bnez t0, _return_line_1
-_return_line_0             li a0, LCD_CMD_VTAB                              ; return to line 0
-                           j _write_data
-_return_line_1             li a0, LCD_CMD_NEWLINE                           ; return to line 1
-                           j _write_data
+                         lw t0, lcd_line_pos                              ; check if currently on line 1
+                         bnez t0, _return_line_1
+_return_line_0           li a0, LCD_CMD_VTAB                              ; return to line 0
+                         j _write_data
+_return_line_1           li a0, LCD_CMD_NEWLINE                           ; return to line 1
+                         j _write_data
 
-_write_data                li a7, ECALL_LCD_WRITE
-                           ecall                                            ; ecall write to lcd
+_write_data              li a7, ECALL_LCD_WRITE
+                         ecall                                            ; ecall write to lcd
 
-                           lw ra, [sp]
-                           addi sp, sp, 4
-                           ret
+                         lw ra, [sp]
+                         addi sp, sp, 4
+                         ret
