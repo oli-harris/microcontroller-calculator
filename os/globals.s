@@ -35,17 +35,11 @@ MASK_BUTTON_2                  EQU 0b0010
 MASK_BUTTON_3                  EQU 0b0100
 MASK_BUTTON_4                  EQU 0b1000
 
-LEDS_HALF_RAINBOW              EQU 0b1111
-LEDS_HALF_RED                  EQU 0b0001
-LEDS_HALF_ORANGE               EQU 0b0010
-LEDS_HALF_GREEN                EQU 0b0100
-LEDS_HALF_BLUE                 EQU 0b1000
-
-LEDS_RAINBOW                   EQU 0b11111111
-LEDS_RED                       EQU 0b00010001
-LEDS_ORANGE                    EQU 0b00100010
-LEDS_GREEN                     EQU 0b01000100
-LEDS_BLUE                      EQU 0b10001000
+LEDS_RAINBOW                   EQU 0b1111
+LEDS_RED                       EQU 0b0001
+LEDS_ORANGE                    EQU 0b0010
+LEDS_GREEN                     EQU 0b0100
+LEDS_BLUE                      EQU 0b1000
 
 ; LCD
 OFFSET_LCD_BUS                 EQU 0x100                  ; (8 bits)

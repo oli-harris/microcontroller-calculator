@@ -6,7 +6,7 @@
 ;  while exceptions are handled synchronously and do not preserve a registers
 ;  (allows returning values from e calls)
 ;
-;  Last Modified: 28/03/2026
+;  Last Modified: 24/04/2026
 ;
 ; -----------------------------
 
@@ -119,18 +119,21 @@ trap_handler_ex_debug            li t1, HARDWARE_BASE_ADDRESS
 
 
 ; trap_handler_external_interrupt
-; Purpose: simple handler for only timer interrupt
+; Purpose: Simple handler for only timer and button interrupts
 trap_handler_ex_interrupt        subi sp, sp, 4
                                  sw ra, [sp]
                                  li t1, HARDWARE_BASE_ADDRESS
                                  lw t0, OFFSET_INTERRUPT_REQUESTS[t1]      ; t0 = pending interrupts
 
-                                 li t1, MASK_INTERRUPT_TIMER               ; Skip other interrupts
-                                 and t1, t1, t0
-                                 beqz t1, trap_handler_ex_interrupt_end
+                                 la ra, trap_handler_ex_interrupt_end
 
-                                 la t0, interrupt_timer                    ; Call timer interrupt handler
-                                 jalr t0
+                                 li t1, MASK_INTERRUPT_TIMER               ; Interrupt timer
+                                 and t1, t1, t0
+                                 bnez t1, interrupt_timer
+
+                                 li t1, MASK_INTERRUPT_BUTTON              ; Interrupt button
+                                 and t1, t1, t0
+                                 bnez t1, interrupt_button
 
 trap_handler_ex_interrupt_end    lw ra, [sp]
                                  addi sp, sp, 4

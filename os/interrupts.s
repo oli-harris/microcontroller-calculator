@@ -29,9 +29,9 @@ interrupt_timer:
                             ret
 
 ; interrupt_button
-; Note: Stub handler
+; Note: Debug to reset entire program.
 interrupt_button:
-                            ret
+                            j m_init
 
 
 ; --- Keyboard ---
