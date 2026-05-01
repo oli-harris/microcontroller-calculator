@@ -60,6 +60,14 @@ start:                   li a0, TIMER_INTERVAL_MS * (TIMER_TICKS_PER_SEC / 1000)
                        li a7, ECALL_SET_LEDS
                        ecall
 
+                       la t0, calc_total                                   ; Initialise memory, allowing for reset with button interrupt
+                       sw zero, calc_total
+                       la t0, calc_current
+                       sw zero, calc_current
+                       la t0, calc_state
+                       li t1, S_ENTER_FIRST
+                       sb t1, [t0]
+
 
 main_loop:             j poll_key
                        j main_loop
