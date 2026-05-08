@@ -49,7 +49,7 @@ DISPLAY_OVERFLOW       defb "\fOverflow Error!\nPress AC...\0"
                        align
 
 
-start:                   li a0, TIMER_INTERVAL_MS * (TIMER_TICKS_PER_SEC / 1000) ; Initialise timer
+start:                 li a0, TIMER_INTERVAL_MS * (TIMER_TICKS_PER_SEC / 1000) ; Initialise timer
                        li a7, ECALL_TIMER_START
                        ecall
 
@@ -61,9 +61,9 @@ start:                   li a0, TIMER_INTERVAL_MS * (TIMER_TICKS_PER_SEC / 1000)
                        ecall
 
                        la t0, calc_total                                   ; Initialise memory, allowing for reset with button interrupt
-                       sw zero, calc_total
+                       sw zero, [t0]
                        la t0, calc_current
-                       sw zero, calc_current
+                       sw zero, [t0]
                        la t0, calc_state
                        li t1, S_ENTER_FIRST
                        sb t1, [t0]

@@ -2,7 +2,7 @@
 ;      OS Global Constants
 ;        Oliver Harris
 ;
-;  Last Modified: 27/03/2026
+;  Last Modified: 08/05/2026
 ;
 ; -----------------------------
 
@@ -15,7 +15,6 @@ MSTATUS_MIE                    EQU 0x8                    ; Machine Interrupt En
 MIE_EXTERNAL                   EQU 0x800                  ; External Interrupt Enable (bit 11)
 
 ; --- ECALLS ---
-ECALL_MAX                      EQU 7                      ; number of supported ecalls
 ECALL_LCD_WRITE                EQU 0
 ECALL_SET_LEDS                 EQU 1
 ECALL_CHANGED_BUTTONS          EQU 2

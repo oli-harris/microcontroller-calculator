@@ -8,7 +8,7 @@
 ;         - writing of padded hex values
 ;         - writing of decimal values
 ;
-; Last modified: 27/04/26
+; Last modified: 08/05/26
 ;
 ; Known bugs: \n and \v dont track col position
 ;
@@ -37,21 +37,24 @@ lcd_line_pos             defb 0
 ;          (\b, \t, \n, \v, \f, \r)
 ; Input: a0 = pointer to null-terminated string
 ; Output: None
-; Modifies: a0, a3, t0, a1
+; Modifies: a0, t0, a1
 write_string:
-                         subi sp, sp, 4
+                         subi sp, sp, 8
+                         sw s0, 4[sp]
                          sw ra, [sp]
 
-                         mv a3, a0                                        ; a3 stores pointer to pos in str
+                         mv s0, a0                                        ; s0 = pointer to pos in str
+                         j write_string_1
 
-write_string_loop        lb a0, [a3]                                      ; loop chars until reaches null terminator
-                         beqz a0, write_string_end
-                         call write_char
-                         addi a3, a3, 1
-                         j write_string_loop
+write_string_loop        call write_char
+                         addi s0, s0, 1
+
+write_string_continue    lb a0, [s0]
+                         bnez a0, write_string_loop
 
 write_string_end         lw ra, [sp]
-                         addi sp, sp, 4
+                         lw s0, 4[sp]
+                         addi sp, sp, 8
                          ret
 
 ; write_hex
@@ -67,19 +70,22 @@ write_hex:
                          sw s1, 8[sp]
 
                          mv s0, a0                                        ; s0 = original value
-                         li t0, 4
-                         mul s1, a1, t0                                   ; s1 = shift amount
+                         slli s1, a1, 2                                   ; s1 = shift amount
                          subi s1, s1, 4                                   ; shift of first nibble
 
 write_hex_nibble         srl a0, s0, s1                                   ; mask off current nibble
                          andi a0, a0, 0xF
                          addi a0, a0, '0'                                 ; 0-9
                          li t0, '9'
-                         bleu a0, t0, _write_hex_call_char                ; preserve ra
-                         addi a0, a0, 'A' - '9' - 1                       ; A-E
-_write_hex_call_char     call write_char
 
-                         subi s1, s1, 4                                   ; shift to next nibble
+                         bgtu a0, t0, _write_hex_letter                   ; statistically less likely to be letter
+_write_hex_call_char     call write_char                                  ; 1-9
+                         j write_hex_continue
+
+_write_hex_letter        addi a0, a0, 'A' - '9' - 1                       ; A-F
+                         call write_char
+
+write_hex_continue       subi s1, s1, 4                                   ; shift to next nibble
                          bgez s1, write_hex_nibble                        ; loop until all nibbles written
 
 write_hex_end            lw s1, 8[sp]
@@ -119,7 +125,6 @@ write_decimal_print      mv s2, a0                                        ; Pres
                          li a7, ECALL_LCD_WRITE
                          ecall
 
-
                          mv a0, s2
                          li t0, 1                                         ; Output has started
 
@@ -154,7 +159,7 @@ write_char:
                          slli a0, a0, 2
                          add t0, t0, a0
                          lw t0, [t0]
-                         jr t0
+                         jalr t0
 
 ; Jump table for special characters handling
 specials_table           defw _write_backspace

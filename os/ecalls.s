@@ -92,16 +92,15 @@ lcd_write_end            lw ra, [sp]
 
 
 ; --- Led Ecalls ---
-; Last modified: 03/03/26
+; Last modified: 08/05/26
 
 ; ecall_set_leds
 ; Purpose: Set LEDs according to input
 ; Input: a0 = LED Colour (8 bits)
 ; Output: None
-; Modifies: t0, a0
+; Modifies: t0
 ecall_set_leds:
                          la t0, HARDWARE_BASE_ADDRESS
-                         andi a0, a0, 0xFF                     ; enforce input a0 is 8 bits
                          sb a0, OFFSET_LED[t0]
                          ret
 
