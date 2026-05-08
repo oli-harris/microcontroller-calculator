@@ -22,7 +22,6 @@
 
 STACK_SIZE             EQU 64
 EXTERNAL_INTERRUPTS    EQU MASK_INTERRUPT_TIMER | MASK_INTERRUPT_BUTTON
-TIMER_INTERVAL_MS      EQU 2
 
 ; --- Calculator State ---
 S_ENTER_NUMBER         EQU 0
@@ -49,11 +48,7 @@ DISPLAY_OVERFLOW       defb "\fOverflow Error!\nPress AC...\0"
                        align
 
 
-start:                 li a0, TIMER_INTERVAL_MS * (TIMER_TICKS_PER_SEC / 1000) ; Initialise timer
-                       li a7, ECALL_TIMER_START
-                       ecall
-
-                       li a0, DISPLAY_WELCOME                              ; Display Message
+start:                 li a0, DISPLAY_WELCOME                              ; Display Message
                        call write_string
 
                        li a0, LEDS_ORANGE | (LEDS_ORANGE << 4)             ; LEDS to indicate ready
@@ -323,8 +318,6 @@ transition_overflow_handler:
                        li t1, S_OVERFLOW
                        sb t1, [t0]                                         ; state = OVERFLOW
                        j main_loop
-
-
 
 
 ; --- Helper Functions ---

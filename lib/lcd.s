@@ -44,7 +44,7 @@ write_string:
                          sw ra, [sp]
 
                          mv s0, a0                                        ; s0 = pointer to pos in str
-                         j write_string_1
+                         j write_string_continue
 
 write_string_loop        call write_char
                          addi s0, s0, 1

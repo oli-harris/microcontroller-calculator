@@ -8,6 +8,7 @@
 
                                  include ../os/init.s
 STACK_SIZE                       EQU 32 * 4
+EXTERNAL_INTERRUPTS              EQU 0
 
 ; --- ALL AVAILABLE TESTS ---
 start:
@@ -17,7 +18,7 @@ start:
 ;  j test_hex_3
 ;  j test_hex_0F
 ;  j test_hex_F3
-;  j test_hex_ABCD1234
+                                 j test_hex_ABCD1234
 ;  j test_hex_A001F34
 
 
@@ -25,7 +26,7 @@ start:
 ;  j test_str_null_terminator
 ;  j test_str_carriage_return
 ;  j test_str_backspace
-                                 j test_str_backspace_complex
+;  j test_str_backspace_complex
 ;  j test_str_tab
 ;  j test_str_tab_complex
 ;  j test_str_vertical_tab
@@ -33,6 +34,8 @@ start:
 ;  j test_str_carriage_both_lines
 ;  j test_str_col_overflow
 ;  j test_str_row_overflow
+
+;  j test_str_format
 
 ; --- CHAR TESTS ---
 
@@ -250,6 +253,13 @@ test_str_row_overflow            la a0, p_str_row_overflow
 p_str_copy_me                    defb "\0"
                                  align
 test_str_copy_me                 la a0, p_str_copy_me
+                                 call write_string
+                                 j end
+
+
+p_str_format                     defb "\f100%\0"
+                                 align
+test_str_format                  la a0, p_str_format
                                  call write_string
                                  j end
 

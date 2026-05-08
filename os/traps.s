@@ -91,7 +91,7 @@ exception_table                  defw trap_handler_halt                         
                                  defw trap_handler_halt                            ;  6 Store address misaligned
                                  defw trap_handler_halt                            ;  7 Store access fault
                                  defw trap_handler_ecall                           ;  8 Environment call from U-mode
-                                 defw trap_handler_ecall                           ;  9 Environment call from S-mode
+                                 defw trap_handler_halt                            ;  9 Environment call from S-mode
                                  defw trap_handler_halt                            ; 10
                                  defw trap_handler_halt                            ; 11 Environment call from M-mode
                                  defw trap_handler_halt                            ; 12 Instruction page fault
@@ -173,13 +173,10 @@ trap_handler_ecall               subi sp, sp, 4
                                  ret
 
 
-ecall_table                      defw ecall_lcd_write                              ; 0 = write data char to lcd
-                                 defw ecall_set_leds                               ; 1 = set LEDs
-                                 defw ecall_changed_buttons                        ; 2 = detect changed buttons
-                                 defw ecall_timer_start                            ; 3 = start timer
-                                 defw ecall_timer_stop                             ; 4 = stop timer
-                                 defw ecall_timer_check_increment                  ; 5 = check timer compare flag
-ecall_table_end                  defw ecall_get_key                                ; 6 = get key from keys buffer
+ecall_table                      defw ecall_lcd_write
+                                 defw ecall_set_leds
+                                 defw ecall_changed_buttons
+ecall_table_end                  defw ecall_get_key
 
 
 ; --- Includes ---
