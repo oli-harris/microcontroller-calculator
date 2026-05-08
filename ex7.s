@@ -34,6 +34,11 @@ calc_current           defw 0                                              ; uin
 calc_state             defb 1
                        align
 
+; --- Application Constants ---
+DECIMAL_BASE           EQU 10
+MAX_U32_DIV10          EQU 429496729                                       ; 2**32 // 10 = 429496729
+MAX_U32_LAST_DIGIT     EQU 5                                               ; (2**32 - 1)% 10 = 5
+
 ; --- Key Lookup Table ---
 KEY_LOOKUP             defb "*7410852#963C=-+"
                        align
@@ -51,7 +56,7 @@ DISPLAY_OVERFLOW       defb "\fOverflow Error!\nPress AC...\0"
 start:                 li a0, DISPLAY_WELCOME                              ; Display Message
                        call write_string
 
-                       li a0, LEDS_ORANGE | (LEDS_ORANGE << 4)             ; LEDS to indicate ready
+                       li a0, LEDS_ORANGE | (LEDS_ORANGE << LEDS_RIGHT)    ; LEDS to indicate ready
                        li a7, ECALL_SET_LEDS
                        ecall
 
@@ -158,21 +163,22 @@ state_enter_number:
 
 ; transition_enter_number_digit
 ; Purpose: current = current * 10 + digit, display current
+; Magic number
 transition_enter_number_digit:
                        subi a0, a0, '0'                                    ; a0 = digit value
                        la t0, calc_current
                        lw t1, [t0]                                         ; t1 = current
-                       li t2, 429496729                                    ; 2 ** 32 // 10 = 429496729
+                       li t2, MAX_U32_DIV10                                ; 2 ** 32 // 10 = 429496729
 
 _overflow_check:
                        bltu t1, t2, _continue
 
                        bgtu t1, t2, transition_overflow_handler            ; current*10 would overflow
 
-                       li t2, 5
+                       li t2, MAX_U32_LAST_DIGIT
                        bgtu a0, t2, transition_overflow_handler            ; current*10 + digit would overflow if digit > 5
 
-_continue              li t2, 10
+_continue              li t2, DECIMAL_BASE                                 ; base 10
                        mul t1, t1, t2                                      ; shift current left by 1 dp
                        add t1, t1, a0                                      ; add new digit
                        sw t1, [t0]                                         ; update current
@@ -206,7 +212,7 @@ transition_enter_number_plus:
                        li a0, DISPLAY_ADD
                        call write_string
 
-                       li a0, LEDS_ORANGE | (LEDS_ORANGE << 4)             ; LEDS in progress
+                       li a0, LEDS_ORANGE | (LEDS_ORANGE << LEDS_RIGHT)    ; LEDS in progress
                        li a7, ECALL_SET_LEDS
                        ecall
 
@@ -224,7 +230,7 @@ transition_enter_number_ac:
                        li a0, '\f'                                         ; Clear screen
                        call write_char
 
-                       li a0, LEDS_ORANGE | (LEDS_ORANGE << 4)             ; LEDS in progress
+                       li a0, LEDS_ORANGE | (LEDS_ORANGE << LEDS_RIGHT)    ; LEDS in progress
                        li a7, ECALL_SET_LEDS
                        ecall
 
@@ -287,7 +293,7 @@ transition_ac_new:
                        la a0, DISPLAY_BEGIN                                ; Clear screen
                        call write_string
 
-                       li a0, LEDS_ORANGE | (LEDS_ORANGE << 4)             ; LEDS in progress
+                       li a0, LEDS_ORANGE | (LEDS_ORANGE << LEDS_RIGHT)    ; LEDS in progress
                        li a7, ECALL_SET_LEDS
                        ecall
 
@@ -310,7 +316,7 @@ transition_overflow_handler:
                        la a0, DISPLAY_OVERFLOW
                        call write_string
 
-                       li a0, LEDS_RED | (LEDS_RED << 4)                   ; LEDS error
+                       li a0, LEDS_RED | (LEDS_RED << LEDS_RIGHT)          ; LEDS error
                        li a7, ECALL_SET_LEDS
                        ecall
 

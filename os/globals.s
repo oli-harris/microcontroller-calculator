@@ -36,6 +36,7 @@ LEDS_RED                       EQU 0b0001
 LEDS_ORANGE                    EQU 0b0010
 LEDS_GREEN                     EQU 0b0100
 LEDS_BLUE                      EQU 0b1000
+LEDS_RIGHT                     EQU 4
 
 ; LCD
 OFFSET_LCD_BUS                 EQU 0x100                                 ; (8 bits)

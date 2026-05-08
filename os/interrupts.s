@@ -109,7 +109,8 @@ key_buffer_pop_empty           li a0, -1
 ; 1D saturating counter array,
 ; key = row * 4 + column
 KEY_COUNTERS                   DEFS 16                                 ; each key is 1 byte
-KEYS_TRIGGER                   EQU 5
+KEY_LAST_PRESSED               DEFB -1                                 ; for repeat functionality
+KEYS_TRIGGER                   EQU 2
 KEYS_REPEAT                    EQU 100
 KEYS_REPEAT_RESET              EQU 60
 
@@ -153,7 +154,7 @@ keyboard_columns_loop          mv t4, t2                               ; t4 = bu
 
                                bnez t4, button_pressed
 
-button_not_pressed             lb t4, [t5]
+button_not_pressed             lb t4, [t5]                             ; t4 = counter for key at (row, column)
                                bgtz t4, button_not_pressed_continue    ; if counter > 0 decrement counter
                                j button_next                           ; else, continue (most likely so avoid branching)
 button_not_pressed_continue    subi t4, t4, 1
@@ -166,11 +167,25 @@ button_pressed                 lb t4, [t5]                             ; increme
 
                                li t6, KEYS_TRIGGER
                                blt t4, t6, button_next                 ; if counter < trigger, continue
-                               beq t4, t6, button_pressed_push         ; else if counter == trigger, button pressed
+                               beq t4, t6, button_pressed_first        ; else if counter == trigger, button pressed
+
                                li t6, KEYS_REPEAT
                                bne t4, t6, button_next                 ; if counter != repeat, continue
-                               li t6, KEYS_REPEAT_RESET
+
+button_pressed_repeat          li t6, KEYS_REPEAT_RESET                ; else if couner == repeat, reset counter
                                sb t6, [t5]
+
+                               la t6, KEY_LAST_PRESSED                 ; check rollover
+                               lb t6, [t6]
+                               la t4, KEY_COUNTERS
+                               sub t4, t5, t4                          ; t4 = key
+                               bne t6, t4, button_next                 ; if not last pressed key, continue
+                               j button_pressed_push                   ; else trigger button press
+
+button_pressed_first           la t6, KEY_LAST_PRESSED                 ; set last_pressed = key
+                               la t4, KEY_COUNTERS
+                               sub t4, t5, t4                          ; t4 = key
+                               sb t4, [t6]
 
 button_pressed_push            la t6, KEY_COUNTERS                     ; push key to buffer
                                sub a0, t5, t6                          ; a0 = key
