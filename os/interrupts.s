@@ -41,7 +41,7 @@ interrupt_timer_end            lw ra, [sp]
 ; interrupt_button
 ; Note: Debug to reset entire program.
 interrupt_button:
-                               j m_init
+                               j .
 
 
 ; --- Keyboard ---
