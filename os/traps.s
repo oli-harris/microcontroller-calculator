@@ -175,7 +175,6 @@ trap_handler_ecall               subi sp, sp, 4
 
 ecall_table                      defw ecall_lcd_write
                                  defw ecall_set_leds
-                                 defw ecall_changed_buttons
                                  defw ecall_get_key
 ecall_table_end                  defw ecall_play_sound
 

@@ -17,9 +17,8 @@ MIE_EXTERNAL                   EQU 0x800                                 ; Exter
 ; --- ECALLS ---
 ECALL_LCD_WRITE                EQU 0
 ECALL_SET_LEDS                 EQU 1
-ECALL_CHANGED_BUTTONS          EQU 2
-ECALL_GET_KEY                  EQU 3
-ECALL_PLAY_SOUND               EQU 4
+ECALL_GET_KEY                  EQU 2
+ECALL_PLAY_SOUND               EQU 3
 
 ; --- HARDWARE ---
 HARDWARE_BASE_ADDRESS          EQU 0x0001_0000
@@ -27,10 +26,10 @@ HARDWARE_BASE_ADDRESS          EQU 0x0001_0000
 ; LED + Buttons
 OFFSET_LED                     EQU 0x0                                   ; (8 bits; redundant but improves readability)
 OFFSET_BUTTONS                 EQU 0x1                                   ; (4 bits)
-MASK_BUTTON_1                  EQU 0b0001
-MASK_BUTTON_2                  EQU 0b0010
-MASK_BUTTON_3                  EQU 0b0100
-MASK_BUTTON_4                  EQU 0b1000
+MASK_BUTTON_1                  EQU (1 << 0)                              ; Mask for button 1 (bit 0)
+MASK_BUTTON_2                  EQU (1 << 1)                              ; Mask for button 2 (bit 1)
+MASK_BUTTON_3                  EQU (1 << 2)                              ; Mask for button 3 (bit 2)
+MASK_BUTTON_4                  EQU (1 << 3)                              ; Mask for button 4 (bit 3)
 
 LEDS_RAINBOW                   EQU 0b1111
 LEDS_RED                       EQU 0b0001
@@ -89,6 +88,8 @@ KEYBOARD_ROWS                  EQU 4                                     ; 4 row
 KEYBOARD_ROW_START             EQU 0x100                                 ; Row 1 (bit 8)
 
 KEYBOARD_COLUMNS               EQU 4                                     ; 4 columns to read
+
+KEYBOARD_BUTTONS               EQU KEYBOARD_ROWS * KEYBOARD_COLUMNS      ; 16 buttons in total (4 rows x 4 columns)
 
 ; SYSTEM CONTRLLER
 OFFSET_PINMUX                  EQU 0x708                                 ; Pin mux control (32 bits)

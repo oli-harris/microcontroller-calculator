@@ -33,6 +33,7 @@ interrupt_timer:
                                li t1, 5                                ; else reset timer and call functions
                                sb t1, [t0]
                                call keyboard_scanner
+                               call button_scanner
 
 interrupt_timer_end            lw ra, [sp]
                                addi sp, sp, 4
@@ -44,7 +45,7 @@ interrupt_button:
                                j .
 
 
-; --- Keyboard ---
+; --- Keys Buffer ---
 
 ; FIFO Queue to store pressed keys, implemented as a leave one empty circular buffer
 KEYS_BUFFER                    DEFS 16                                 ; each key is 1 byte
@@ -58,8 +59,9 @@ KEYS_BUFFER_TAIL_OFFSET        EQU 17
 ; key_buffer_push
 ; Purpose: Push to tail of queue, discard if buffer is full
 ; Input: a0 = key to push (0-15)
-; Output: Modifies: t3, t4, t5, t6
-; Preserves: t3, t4 (to preserve keyboard_scanner state)
+; Output: None
+; Modifies: t5, t6 (not used after call, so no need to preserve)
+; Preserves: t3, t4
 key_buffer_push:
                                subi sp, sp, 8
                                sw t4, 4[sp]
@@ -85,6 +87,7 @@ key_buffer_push_end            lw t3, [sp]
 ; key_buffer_pop
 ; Purpose: Pop from head of queue
 ; Output: a0 = Head of queue, or -1 if queue is empty
+; Modifies: t0, t1, t2
 key_buffer_pop:
                                la t0, KEYS_BUFFER                      ; t0 always base address of keys buffer
                                lbu t1, KEYS_BUFFER_HEAD_OFFSET[t0]     ; t1 = head index (unsigned)
@@ -104,22 +107,54 @@ key_buffer_pop_empty           li a0, -1
                                ret
 
 
+; --- Scanners ---
+
+; button_scanner
+; Purpose: Scans 4 buttons, and adds to key buffer with debounce functionality
+; Loop unrolled for efficiency
+button_scanner:
+                               subi sp, sp, 4
+                               sw ra, [sp]
+
+                               li t0, HARDWARE_BASE_ADDRESS
+                               lb t0, OFFSET_BUTTONS[t0]               ; t0 = current value of buttons
+
+                               la t2, BUTTONS_COUNTERS
+
+button_scanner_1               la ra, button_scanner_2
+                               addi a0, t2, 0                          ; a0 = pointer to counter for button 1
+                               andi t1, t0, MASK_BUTTON_1              ; mask button 1
+                               beqz t1, button_not_pressed
+                               j button_pressed
+
+button_scanner_2               la ra, button_scanner_3
+                               addi a0, t2, 1                          ; a0 = pointer to counter for button 2
+                               andi t1, t0, MASK_BUTTON_2              ; mask button 2
+                               beqz t1, button_not_pressed
+                               j button_pressed
+
+button_scanner_3               la ra, button_scanner_4
+                               addi a0, t2, 2                          ; a0 = pointer to counter for button 3
+                               andi t1, t0, MASK_BUTTON_3              ; mask button 3
+                               beqz t1, button_not_pressed
+                               j button_pressed
+
+button_scanner_4               la ra, button_scanner_end
+                               addi a0, t2, 3                          ; a0 = pointer to counter for button 4
+                               andi t1, t0, MASK_BUTTON_4              ; mask button 4
+                               beqz t1, button_not_pressed
+                               j button_pressed
 
 
-; 1D saturating counter array,
-; key = row * 4 + column
-KEY_COUNTERS                   DEFS 16                                 ; each key is 1 byte
-KEY_LAST_PRESSED               DEFB -1                                 ; for repeat functionality
-KEYS_TRIGGER                   EQU 2
-KEYS_REPEAT                    EQU 100
-KEYS_REPEAT_RESET              EQU 60
+button_scanner_end             lw ra, [sp]
+                               addi sp, sp, 4
+                               ret
 
-                               align
 
 
 ; keyboard_scanner
-; Purpose: Scans keyboard, updates counters, appends pressed key to keys buffer every 5ms
-; Modifies: a0, a2, t0-t6
+; Purpose: Scans 16-digit keyboard, and adds to key buffer with debounce and auto-repeat functionality
+; Modifies: a0, a2, t0-t5
 keyboard_scanner:
                                subi sp, sp, 4
                                sw ra, [sp]
@@ -143,62 +178,94 @@ keyboard_rows_loop             li t2, MASK_KEYBOARD_ROWS               ; set all
                                srli t2, t2, 12
 
                                li t3, 0                                ; t3 = current column
-keyboard_columns_loop          mv t4, t2                               ; t4 = button value at (row, column)
-                               srl t4, t4, t3
-                               andi t4, t4, 1
+keyboard_columns_loop          mv t4, t2
+                               srl t4, t4, t3                          ; shift to bit 0
+                               andi t4, t4, 1                          ; t4 = button value (0 or 1) for current row and column
 
-                               la t5, KEY_COUNTERS                     ; t5 = pointer to current key counter
-                               slli t6, t1, 2                          ;    = key_counters + row*4 + col
-                               add t5, t5, t6
-                               add t5, t5, t3
+                               la a0, KEYBOARD_COUNTERS                ;
+                               slli t5, t1, 2                          ;
+                               add a0, a0, t5                          ; (a0 += row * 4)
+                               add a0, a0, t3                          ; (a0 += column); a0 = pointer to counter for key at (row, column)
 
-                               bnez t4, button_pressed
+                               la ra, keyboard_next_column
+                               bnez t4, button_pressed                 ; if button value is 1, button pressed
+                               j button_not_pressed                    ; else button not pressed (most likely, so avoid branching)
 
-button_not_pressed             lb t4, [t5]                             ; t4 = counter for key at (row, column)
-                               bgtz t4, button_not_pressed_continue    ; if counter > 0 decrement counter
-                               j button_next                           ; else, continue (most likely so avoid branching)
-button_not_pressed_continue    subi t4, t4, 1
-                               sb t4, [t5]
-                               j button_next
+keyboard_next_column           addi t3, t3, 1
+                               li t5, KEYBOARD_COLUMNS
+                               blt t3, t5, keyboard_columns_loop
 
-button_pressed                 lb t4, [t5]                             ; increment counter
-                               addi t4, t4, 1
-                               sb t4, [t5]
-
-                               li t6, KEYS_TRIGGER
-                               blt t4, t6, button_next                 ; if counter < trigger, continue
-                               beq t4, t6, button_pressed_first        ; else if counter == trigger, button pressed
-
-                               li t6, KEYS_REPEAT
-                               bne t4, t6, button_next                 ; if counter != repeat, continue
-
-button_pressed_repeat          li t6, KEYS_REPEAT_RESET                ; else if couner == repeat, reset counter
-                               sb t6, [t5]
-
-                               la t6, KEY_LAST_PRESSED                 ; check rollover
-                               lb t6, [t6]
-                               la t4, KEY_COUNTERS
-                               sub t4, t5, t4                          ; t4 = key
-                               bne t6, t4, button_next                 ; if not last pressed key, continue
-                               j button_pressed_push                   ; else trigger button press
-
-button_pressed_first           la t6, KEY_LAST_PRESSED                 ; set last_pressed = key
-                               la t4, KEY_COUNTERS
-                               sub t4, t5, t4                          ; t4 = key
-                               sb t4, [t6]
-
-button_pressed_push            la t6, KEY_COUNTERS                     ; push key to buffer
-                               sub a0, t5, t6                          ; a0 = key
-                               call key_buffer_push
-
-button_next                    addi t3, t3, 1
-                               li t6, KEYBOARD_COLUMNS
-                               blt t3, t6, keyboard_columns_loop
-
-keyboard_columns_exit          addi t1, t1, 1                          ; next row
+keyboard_next_row              addi t1, t1, 1
                                li t2, KEYBOARD_ROWS
                                blt t1, t2, keyboard_rows_loop
 
-keyboard_rows_exit             lw ra, [sp]
+keyboard_scanner_end           lw ra, [sp]
                                addi sp, sp, 4
                                ret
+
+
+
+; --- Debounce Logic ---
+
+; Data structure for 1D saturating counter array
+; (key = row * 4 + column)
+KEYBOARD_COUNTERS              DEFS 16                                 ; each key is 1 byte
+BUTTONS_COUNTERS               DEFS 4                                  ; each button is 1 byte
+
+KEY_LAST_PRESSED               DEFB -1                                 ; for repeat functionality
+KEYS_TRIGGER                   EQU 2
+KEYS_REPEAT                    EQU 100
+KEYS_REPEAT_RESET              EQU 60
+                               align
+
+
+; button_not_pressed
+; Purpose: Counter = max(0, counter - 1), slowly decrements counter when button not pressed
+; Input: a0 = pointer to counter for key at (row, column)
+; Modifies: t4
+button_not_pressed             lb t4, [a0]                             ; t4 = counter for key at (row, column)
+                               bgtz t4, button_not_pressed_continue    ; if counter > 0 decrement counter
+                               ret                                     ; else, continue (most likely so avoid branching)
+button_not_pressed_continue    subi t4, t4, 1
+                               sb t4, [a0]
+                               ret
+
+
+; button_pressed
+; Purpose: Counter++, triggers button press and auto-repeats key with rollover.
+; Input: a0 = pointer to counter for key at (row, column)
+; Modifies: t4, t5, a0, t6 (by calling key_buffer_push)
+button_pressed                 lb t4, [a0]                             ; increment counter
+                               addi t4, t4, 1
+                               sb t4, [a0]
+
+                               li t5, KEYS_TRIGGER
+                               blt t4, t5, button_pressed_end          ; if counter < trigger, continue
+                               beq t4, t5, button_pressed_first        ; else if counter == trigger, button pressed
+
+                               li t5, KEYS_REPEAT
+                               bne t4, t5, button_pressed_end          ; if counter != repeat, continue
+
+button_pressed_repeat          li t5, KEYS_REPEAT_RESET                ; else if counter == repeat, reset counter
+                               sb t5, [a0]
+
+                               la t5, KEY_LAST_PRESSED                 ; check rollover
+                               lb t5, [t5]
+                               la t4, KEYBOARD_COUNTERS
+                               sub t4, a0, t4                          ; t4 = key
+                               bne t5, t4, button_pressed_end          ; if not last pressed key, continue
+                               j button_pressed_push                   ; else trigger button press
+
+button_pressed_first           la t5, KEY_LAST_PRESSED                 ; set last_pressed = key
+                               la t4, KEYBOARD_COUNTERS
+                               sub t4, a0, t4                          ; t4 = key
+                               sb t4, [t5]
+
+button_pressed_push            la t5, KEYBOARD_COUNTERS                ; get key value as index from base counter pointer
+                               sub a0, a0, t5                          ; a0 = key
+
+                               j key_buffer_push                       ; push key to buffer, then returns
+button_pressed_end             ret
+
+
+
