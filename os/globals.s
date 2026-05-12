@@ -19,6 +19,7 @@ ECALL_LCD_WRITE                EQU 0
 ECALL_SET_LEDS                 EQU 1
 ECALL_CHANGED_BUTTONS          EQU 2
 ECALL_GET_KEY                  EQU 3
+ECALL_PLAY_SOUND               EQU 4
 
 ; --- HARDWARE ---
 HARDWARE_BASE_ADDRESS          EQU 0x0001_0000
@@ -88,6 +89,16 @@ KEYBOARD_ROWS                  EQU 4                                     ; 4 row
 KEYBOARD_ROW_START             EQU 0x100                                 ; Row 1 (bit 8)
 
 KEYBOARD_COLUMNS               EQU 4                                     ; 4 columns to read
+
+; SYSTEM CONTRLLER
+OFFSET_PINMUX                  EQU 0x708                                 ; Pin mux control (32 bits)
+PIZO_ENABLE_BITS               EQU 0xC0                                  ; Enable bits for piezo (bits 6 and 7)
+
+; USER PERIPHERALS
+USER_PERIPHERAL_BASE           EQU 0x0002_0000                           ; Base address for user peripherals
+
+; BUZZER
+OFFSET_BUZZER                  EQU 0                                     ; Offset for buzzer (bit 0: enable, bits 1-5: pitch)
 
 ; EXTERNAL INTERRUPTS
 MASK_INTERRUPT_USER1           EQU 0x01                                  ; (bit 0)
