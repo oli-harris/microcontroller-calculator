@@ -1,12 +1,3 @@
-;------------------------------------------------------------------------
-;                              Ecall Handlers
-;                              Oliver Harris
-;
-; A collection of modular ecall handlers.
-; Each handler is called by trap_handler_ecall.
-;
-;------------------------------------------------------------------------
-
 ; --- LCD Ecalls ---
 ; Last modified: 10/03/26
 
@@ -67,53 +58,3 @@ lcd_write_end        lw ra, [sp]
                      addi sp, sp, 4
                      ret
 
-
-; --- Led Ecalls ---
-; Last modified: 08/05/26
-
-; ecall_set_leds
-; Purpose: Set LEDs according to input
-; Input: a0 = LED Colour (8 bits)
-; Output: None
-; Modifies: t0
-ecall_set_leds:
-                     la t0, HARDWARE_BASE_ADDRESS
-                     sb a0, OFFSET_LED[t0]
-                     ret
-
-
-; --- Keyboard Ecalls ---
-; Last modified: 27/03/26
-
-; ecall_get_key
-; Purpose: Get least recently pressed key, or -1 if no key
-;          (wrapper for key_buffer_pop so agnostic to implementation)
-; Output: a0 = -1 for no key, else 0-15
-ecall_get_key:
-                     subi sp, sp, 4
-                     sw ra, [sp]
-
-                     call key_buffer_pop
-
-                     lw ra, [sp]
-                     addi sp, sp, 4
-                     ret
-
-; --- Buzzer Ecalls ---
-; Last modified: 11/05/26
-
-; ecall_play_sound
-; Purpose: Play a sound on the buzzer
-; Input: a0 = note (1-50), or 0 to stop
-ecall_play_sound:
-                     li t0, USER_PERIPHERAL_BASE
-                     bnez a0, play_sound
-
-stop_buzzer          li t1, 0                           ; Sets disable bit and ignores note
-                     j write_sound
-
-play_sound           slli t1, a0, 1                     ; Set note (bits 1-6)
-                     ori t1, t1, 1                      ; Set enable bit
-
-write_sound          sb t1, OFFSET_BUZZER[t0]
-                     ret

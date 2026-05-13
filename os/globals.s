@@ -14,12 +14,6 @@ MSTATUS_MPP_MACHINE            EQU 0x1800                                ; MPP b
 MSTATUS_MIE                    EQU 0x8                                   ; Machine Interrupt Enable (bit 3)
 MIE_EXTERNAL                   EQU 0x800                                 ; External Interrupt Enable (bit 11)
 
-; --- ECALLS ---
-ECALL_LCD_WRITE                EQU 0
-ECALL_SET_LEDS                 EQU 1
-ECALL_GET_KEY                  EQU 2
-ECALL_PLAY_SOUND               EQU 3
-
 ; --- HARDWARE ---
 HARDWARE_BASE_ADDRESS          EQU 0x0001_0000
 

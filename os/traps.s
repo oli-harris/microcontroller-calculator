@@ -1,6 +1,6 @@
 ; -----------------------------
-;         Trap Handlers
-;         Oliver Harris
+;                             Trap Handlers
+;                             Oliver Harris
 ;  Designed to be modular and extensible, with most traps not handled by default.
 ;  Interrupts are handled asynchronously and preserve all registers,
 ;  while exceptions are handled synchronously and do not preserve a registers
@@ -171,14 +171,3 @@ trap_handler_ecall               subi sp, sp, 4
                                  lw ra, [sp]
                                  addi sp, sp, 4
                                  ret
-
-
-ecall_table                      defw ecall_lcd_write
-                                 defw ecall_set_leds
-                                 defw ecall_get_key
-ecall_table_end                  defw ecall_play_sound
-
-
-; --- Includes ---
-                                 include ecalls.s
-                                 include interrupts.s
