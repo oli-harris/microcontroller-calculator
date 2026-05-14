@@ -49,6 +49,8 @@ LCD_CMD_NEWLINE                EQU 0x1C0                                 ; Line 
 LCD_CMD_VTAB                   EQU 0x180                                 ; Vertical tab (up line)
 LCD_CMD_CLEAR                  EQU 0x101                                 ; Form feed (clear display, reset cursor)
 
+LCD_COLS                       EQU 16
+LCD_ROWS                       EQU 2
 
 ; TIMER
 OFFSET_TIMER_COUNTER           EQU 0x200                                 ; Counter value (32 bits)

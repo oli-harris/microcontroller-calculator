@@ -7,9 +7,10 @@
 ; Last modified: 130/05/26
 ; -----------------------------------------------------------------------------
 
-; --- Menu Page ---
+; --- Menu Memory ---
 
 MENU_TABLE           DEFW MENU_MESSAGE, menu_init
+                     defw MENU_CALCULATOR, calc_init
 MENU_TABLE_END       DEFW MENU_TEST, test_init
 
 MENU_PAGES           EQU (MENU_TABLE_END - MENU_TABLE) / 8 + 1
@@ -32,6 +33,7 @@ menu_buttons         defw menu_home
                      defw menu_left
 menu_buttons_end     defw menu_right
 
+; --- Page Functions ---
 
 ; menu_init
 ; Purpose: Initialise menu page and render first page.
@@ -91,7 +93,7 @@ menu_render          subi sp, sp, 4
                      ret
 
 
-; --- Menu Button Handlers ---
+; --- Menu Buttons ---
 
 ; menu_home
 ; Purpose: Handler for home button, switches to to menu and resets menu page to 0.

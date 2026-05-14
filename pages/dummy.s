@@ -9,6 +9,15 @@
 
 ; ---  Page ---
 
+; dummy_init
+; Purpose: Initialise dummy page.
+dummy_init           subi sp, sp, 4
+                     sw ra, [sp]
+
+
+                     lw ra, [sp]
+                     addi sp, sp, 4
+                     ret
 
 ; dummy_handler
 ; Purpose: Handle button presses, then call dummy_render to update dummy page.

@@ -4,7 +4,9 @@
 ;
 ; Implements a test page, which can be navigated with the buttons.
 ;
-; Last modified: 130/05/26
+; Known issues: may cause 5 and 1 errors.*
+;
+; Last modified: 13/05/26
 ; -----------------------------------------------------------------------------
 
 ; --- Test Pages ---
@@ -75,7 +77,7 @@ test_render          subi sp, sp, 8
                      call write_char
 
                      la s0, current_test_page
-                     lb s0, [s0]                                             ; s0 = current test page
+                     lb s0, [s0]        menu_init                            ; s0 = current test page
 
                      addi a0, s0, 1                                          ; Displays 'hex page number) '
                      li a1, 2
@@ -108,6 +110,123 @@ test_render          subi sp, sp, 8
                      lw s0, 4[sp]
                      addi sp, sp, 8
                      ret
+
+
+test_home            ret
+
+; test_okay
+; Purpose: Run test, and update PASS/FAIL
+; For debugging, place a breakpoint and check value of registers a0 and a1
+test_okay:           subi sp, sp, 8
+                     sw s0, 4[sp]
+                     sw ra, [sp]
+
+                     la t0, current_test_page
+                     lb t0, [t0]                                             ; t0 = current test page
+
+                     la t1, TESTS_TABLE
+                     slli t0, t0, 4                                          ; t0 = offset of current test (16 bytes per test)
+                     add s0, t0, t1                                          ; s0 = address of current test in TESTS_TABLE
+
+                     lw t0, [s0]
+                     jalr t0                                                 ; Run test
+
+                     lw t1, 8[s0]                                            ; t1 = pointer to upper expected value
+                     lw t0, 12[s0]                                           ; t0 = pointer to lower expected value
+                     lw t1, [t1]                                             ; t1 = upper expected value
+                     lw t0, [t0]                                             ; t0 = lower expected value
+
+                     la s0, current_test_page                                ; s0 reused for address of current test page
+                     lb s0, [s0]
+
+                     bne a0, t0, test_okay_fail                              ; If either value is not as expected, test fails
+                     bne a1, t1, test_okay_fail
+
+                     li t0, TEST_PASS                                        ; Test passed if both values are as expected
+                     j test_okay_end
+
+test_okay_fail       li t0, TEST_FAIL
+
+test_okay_end        la t1, TESTS_RESULTS                                    ; Store result
+                     add t1, t1, s0
+                     sb t0, [t1]
+
+                     lw ra, [sp]
+                     lw s0, 4[sp]
+                     addi sp, sp, 8
+                     ret
+
+
+
+
+; test_left
+; Purpose: Handler for left button, decrements menu page without wrapping.
+test_left:
+                     la t0, current_test_page
+                     lb t1, [t0]                                             ; t1 = current menu page
+                     blez t1, test_left_end                                  ; If on page 0, don't decrement
+                     subi t1, t1, 1                                          ; Move page left
+                     sb t1, [t0]
+test_left_end        ret
+
+; test_right
+; Purpose: Handler for right button, increments menu page without wrapping.
+test_right:
+                     la t0, current_test_page
+                     lb t1, [t0]
+                     li t2, TEST_PAGES - 1
+                     bgeu t1, t2, test_right_end                             ; If on last page, don't increment
+                     addi t1, t1, 1                                          ; Move page right
+                     sb t1, [t0]
+test_right_end       ret
+
+
+
+
+; --- Tests ---
+
+; Test Table
+; Function pointer, string pointer, upper expected value pointer, lower expected value pointer
+TESTS_TABLE          defw test_1, test1_str, test1_upper, test1_lower
+                     defw test_2, test2_str, test2_upper, test2_lower
+                     defw test_3, test3_str, test3_upper, test3_lower
+TESTS_TABLE_END
+
+TESTS_RESULTS        defb 0, 0, 0
+                     align
+
+TEST_PAGES           EQU (TESTS_TABLE_END - TESTS_TABLE) / 16
+
+; test 1
+test1_upper          DEFW 0
+test1_lower          DEFW 4
+test1_str            defb "2 + 2", 0
+                     align
+
+test_1               li a0, 4
+                     li a1, 0
+                     ret
+
+; test 2
+test2_upper          DEFW 0
+test2_lower          DEFW 5
+test2_str            defb "2 + 3", 0
+                     align
+
+test_2               li a0, 5
+                     li a1, 0
+                     ret
+
+; test 3
+test3_upper          DEFW 0
+test3_lower          DEFW 5
+test3_str            defb "2 + 3", 0
+                     align
+
+test_3               li a0, 6
+                     li a1, 0
+                     ret
+
 
 
 test_home            ret
