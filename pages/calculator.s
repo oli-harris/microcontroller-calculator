@@ -13,11 +13,19 @@
                           include ../lib/calc.s
 
 ; --- Calc Memory ---
-EXPRESSION_BUFFER_SIZE    EQU 64                                ; Size of expression buffer, in bytes
-expression_buffer         DEFS 64                               ; Used to store string of current expression being entered by the user
+EXPRESSION_BUFFER_SIZE    EQU 64                                    ; Size of expression buffer, in bytes
+expression_buffer         DEFS 64   
 
-expression_length         DEFB 0                                ; Length of current expression (position of null terminator)
-expression_position       DEFB 0                                ; Position of cursor from the right
+OPERATOR_STACK_SIZE       EQU EXPRESSION_BUFFER_SIZE / 2            ; Used to store string of current expression being entered by the user
+operator_stack            DEFS 1 * OPERATOR_STACK_SIZE              ; 1 byte per operator
+operator_stack_top        DEFB 0                                    ; Position of top of operator stack   
+
+OUTPUT_STACK_SIZE         EQU EXPRESSION_BUFFER_SIZE / 2            ; Max number of operands in expression is half the number of characters, rounded down
+output_stack              DEFS 8 * OUTPUT_STACK_SIZE                ; 8 bytes per operand
+output_stack_top          DEFB 0                                    ; Position of top of output stack
+
+expression_length         DEFB 0                                    ; Length of current expression (position of null terminator)
+expression_position       DEFB 0                                    ; Position of cursor from the right
                           align
 
 calc_result               DEFW 0, 0
