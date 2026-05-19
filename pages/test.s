@@ -48,9 +48,6 @@ test_handler         subi sp, sp, 4
                      lw t0, [t0]
                      jalr t0                                                                ; Jump to appropriate handler, then continue
 
-                     li a0, 0
-                     call test_render                                                       ; Render test page after handling button press
-
 test_handler_end     lw ra, [sp]
                      addi sp, sp, 4
                      ret

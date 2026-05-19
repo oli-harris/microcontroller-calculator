@@ -11,6 +11,7 @@
 
 MENU_TABLE           DEFW MENU_MESSAGE, menu_init
                      defw MENU_CALCULATOR, calc_init
+                     defw MENU_HISTORY, history_init
 MENU_TABLE_END       DEFW MENU_TEST, test_init
 
 MENU_PAGES           EQU (MENU_TABLE_END - MENU_TABLE) / 8 + 1
@@ -24,7 +25,6 @@ MENU_TITLE           DEFB "\fMain Menu:    \n", 0
 MENU_MESSAGE         DEFB "  Select Mode  >", 0
 MENU_CALCULATOR      DEFB "<  Calculator  >", 0
 MENU_HISTORY         DEFB "<   History    >", 0
-MENU_PIANO           DEFB "<    Piano     >", 0
 MENU_TEST            DEFB "<    Tests      ", 0
                      align
 
@@ -117,6 +117,7 @@ menu_okay:
 
                      la t1, MENU_TABLE
                      slli t0, t0, 3                                  ; t0 = current menu page * 8
+
                      add t0, t0, t1                                  ; t1 = address of current menu entry
                      lw t0, 4[t0]                                    ; t0 = address of init function
                      jalr t0                                         ; Call init function

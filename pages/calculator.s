@@ -30,8 +30,8 @@ expression_position       DEFB 0                                                
 
 CALC_HISTORY_SIZE         EQU 8                                                              ; Number of previous results to store in history
 calc_history              DEFS 8 * CALC_HISTORY_SIZE                                         ; Circular array of previous results, 64 bit integers
-calc_history_index        DEFB 0                                                             ; Index of most recent result in history
-calc_history_count        DEFB 0                                                             ; Number of results
+calc_history_head         DEFB 0                                                             ; Head of array, most recent result in history
+calc_history_count        DEFB 0                                                             ; Size of array (0 to size-1)
 
 calc_error_code           DEFB 0                                                             ; error code, returned by calc.s
 
@@ -159,7 +159,7 @@ _offset_continue          la t1, expression_buffer
                           bnez t0, render_error                                              ; If error code nonzero, render error instead
 
 render_result             la t0, calc_history                                                ; If in result state, display most recent result in history
-                          la t1, calc_history_index
+                          la t1, calc_history_head
                           lb t1, [t1]                                                        ; t1 = index of most recent result in history
                           slli t1, t1, 3                                                     ; t1 = offset (index * 8)
                           add t0, t0, t1                                                     ; t0 = address of most recent result in history
@@ -291,24 +291,24 @@ digit_equals              la a0, expression_buffer
 
                           bnez a2, _store_error                                              ; Exit early if non-zero error code
 
-_store_result             la t0, calc_history
-                          la t1, calc_history_index
-                          lb t1, [t1]                                                        ; t1 = index of most recent result
+_store_result             la t0, calc_history_head
+                          lbu t1, [t0]                                                       ; t1 = index of most recent result
                           addi t1, t1, 1                                                     ; increment index
-                          andi t1, t1, CALC_HISTORY_SIZE - 1                                 ; wrap index (power of 2)
-                          slli t2, t1, 3                                                     ; t2 = offset (index * 8)
-                          add t0, t0, t2                                                     ; t0 = address of where to store result
+                          andi t1, t1, CALC_HISTORY_SIZE - 1                                 ; wrap index (history size power of 2)
+                          sb t1, [t0]                                                        ; update index
+
+                          la t0, calc_history                                                ; Push result to history circular array
+                          slli t1, t1, 3                                                     ; t1 = offset (index * 8)
+                          add t0, t0, t1                                                     ; t0 = address of where to store result
                           sw a0, [t0]                                                        ; Store lower bits of result
                           sw a1, 4[t0]                                                       ; Store upper bits of result
 
-                          la t0, calc_history_index                                          ; update index
-                          sb t1, [t0]
-
-                          la t0, calc_history_count                                          ; history count += 1 if less than max
-                          lb t1, [t0]
+                          la t0, calc_history_count                                          ; history count = min(count, HISTORY_SIZE)
+                          lbu t1, [t0]
+                          li t2, CALC_HISTORY_SIZE
+                          bgeu t1, t2, _history_continue
                           addi t1, t1, 1
-                          andi t1, t1, CALC_HISTORY_SIZE - 1
-                          sb t1, [t0]
+_history_continue         sb t1, [t0]
 
 _store_error              la t0, calc_error_code                                             ; store error code, including 0 for success
                           sb a2, [t0]
