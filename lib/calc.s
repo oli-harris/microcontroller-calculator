@@ -28,7 +28,7 @@ ERR_INTERNAL                EQU 4                                    ; unexpecte
 ; Purpose: Parse the input buffer from infix notation, and convert to RPN with two stacks: one for operators, and one for operands.
 ; Implements a modified version of the shunting yard algorithm, without parentheses.
 ; Input: a0 = pointer to input buffer, a1 = pointer to operator stack, a2 = pointer to operator stack top, a3 = pointer to output stack, a4 = pointer to output stack top, a5 = stack size
-; Output: a0 = error code
+; Output: a2 = error code (register used for consistency with all functions in library)
 shunting_yard:
                             subi sp, sp, 24
                             sw s4, 20[sp]

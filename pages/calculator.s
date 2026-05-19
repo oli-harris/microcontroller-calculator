@@ -93,7 +93,6 @@ calc_init                 subi sp, sp, 4
 
                           la t0, expression_buffer
                           sb zero, [t0]                                                      ; Null terminate buffer at start
-
                           la t0, expression_length
                           sb zero, [t0]                                                      ; Set expression length to 0
 
@@ -166,13 +165,14 @@ render_result             la t0, calc_history                                   
                           add t0, t0, t1                                                     ; t0 = address of most recent result in history
                           lw a0, [t0]                                                        ; a0 = lower bits
                           lw a1, 4[t0]                                                       ; a1 = upper bits
-                          call write_int64
+                          call write_decimal                                                 ; write lower bits
                           j render_end
 
 render_error              la t1, ERROR_MSG_TABLE
                           subi t0, t0, 1                                                     ; Starts at error code 1
-                          slli t0, t0, 3                                                     ; t0 = offset (error code * 8)
+                          slli t0, t0, 2                                                     ; t0 = offset (error code * 4)
                           add t1, t1, t0                                                     ; t1 = address of error message
+                          lw a0, 0[t1]                                                       ; a0 = pointer to error string
                           call write_string
 
 
@@ -274,7 +274,7 @@ digit_equals              la a0, expression_buffer
                           la a4, output_stack_top
                           li a5, SHUNTING_STACK_SIZE
                           call shunting_yard
-                          bnez a0, _store_error                                              ; Exit early if non-zero error code
+                          bnez a2, _store_error                                              ; Exit early if non-zero error code
 
                           la a0, operator_stack
                           la a1, operator_stack_top
@@ -282,6 +282,14 @@ digit_equals              la a0, expression_buffer
                           la a3, output_stack_top
                           li a4, SHUNTING_STACK_SIZE
                           call evaluate_rpn
+
+                          la t0, operator_stack_top
+                          sb zero, [t0]                                                      ; Clear operator stack
+                          la t0, output_stack_top
+                          sb zero, [t0]                                                      ; Clear output stack
+
+
+                          bnez a2, _store_error                                              ; Exit early if non-zero error code
 
 _store_result             la t0, calc_history
                           la t1, calc_history_index
@@ -303,7 +311,7 @@ _store_result             la t0, calc_history
                           sb t1, [t0]
 
 _store_error              la t0, calc_error_code                                             ; store error code, including 0 for success
-                          sb a0, [t0]
+                          sb a2, [t0]
 
 digit_equals_end          la t0, calc_state                                                  ; Update state
                           li t1, CALC_RESULT
