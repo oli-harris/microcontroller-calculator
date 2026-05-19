@@ -17,9 +17,9 @@
 ; --- Library Constants ---
 
 ERR_SUCCESS               EQU 0
-ERR_DIV_ZERO              EQU 1
-ERR_INVALID_CHAR          EQU 2
-ERR_OVERFLOW              EQU 3  
+ERR_OVERFLOW              EQU 1  ; uses set to avoid branching
+ERR_DIV_ZERO              EQU 2
+ERR_INVALID_CHAR          EQU 3
 ERR_INTERNAL              EQU 4  ; unexpected internal error, ie. stack overflow 
 
 
@@ -133,18 +133,77 @@ evaluate_rpn:
 
 
 ; --- Mathematical Functions ---
-; Consistent 64 bit integer arithmetic functions, with error handling for overflow and division by zero.
+; Consistent 64 bit integer signed arithmetic functions, with error handling for overflow and division by zero.
 ; Input: a0 = operand 1 lower, a1 = operand 1 upper, a2 = operand 2 lower, a3 = operand 2 upper
 ; Output: a0 = result lower, a1 = result upper, a2 = error code
 
 ; add_64
+; Purpose: Add two 64 bit integers using carry, with overflow detection.
+; Formula: l_res = l_1 + l2, u_res = u_1 + u_2 + carry, carry = 1 if l_res < l_1
+; Cost: cheap
+add_64: 
+                        add t0, a0, a2   ; t0 = lower bits sum
+                        sltu t1, t0, a0  ; t1 = 1 if overflow in lower bits
+                        
+                        add t2, a1, a3   ; t2 = upper bits sum
+                        add a1, t2, t1   ; add carry from lower bits
+
+                        sltu a2, t2, a1 ; a2 = 1 if overflow in upper bits
+                        mv a0, t0
+                        ret
 
 
 ; sub_64
+; Purpose: Subtract two 64 bit integers using borrow, with overflow detection.
+; Formula: l_res = l_1 - l2, u_res = u_1 - u_2 - borrow, borrow = 1 if l_1 < l_2
+; Cost: cheap
+sub_64
+                        sub t0, a0, a2   ; t0 = lower bits difference
+                        sltu t1, a0, a2  ; t1 = 1 if borrow in lower bits
+
+                        sub t2, a1, a3   ; t2 = upper bits difference
+                        sub a1, t2, t1   ; subtract borrow from upper bits
+
+                        sltu a2, t2, a1 ; a2 = 1 if overflow in upper bits
+                        mv a0, t0
+                        ret
 
 ; mul_64
+; Purpose: Multiply two 64 bit integers, only returns lower 64 bits of result, with overflow detection.
+; Formula: l_res = l(l_1 * l_2), u_res = u(l_1 * l_2) + l(u_1 * l_2) + l(l_1 * u_2)
+; Cost: very expensive, requires both multiplication and division for overflow detection
+mul_64
+                        mul t0, a0, a2     ; low 32 bits of l_1 * l_2
+
+                        mulhu t1, a0, a2   ; high 32 bits of l_1 * l_2
+                        mul t2, a1, a2     ; l(u_1 * l_2), cross product 1
+                        mul t3, a0, a3     ; l(l_1 * u_2), cross product 2
+
+                        add t1, t1, t2     ; sum upper bits
+                        add s1, t1, t3     ; s1 = upper bits
+
+                        mv s0, t0          ; s0 = lower bits
+
+                        mv a0, s0          
+                        mv a1, s1
+
+
+
+mul_64_overflow                        
+   
+    ; if int_1 != 0 and res / int1 != int_2, then overflow                      
+
+
 
 ; div_64
+; Purpose: implements long division for 64 bit integers.
+; Returns quotient of operand 1 / operand 2.
+; Cost: expensive, requires lots of iterations in worst case
+div_64         or t0, a2, a3   ; if operand 2 is zero, error
+               beqz t0, div_64_loop
 
 
 
+
+div_64_by_zero li a2, ERR_DIV_ZERO
+               ret

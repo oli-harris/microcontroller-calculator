@@ -16,19 +16,24 @@
 EXPRESSION_BUFFER_SIZE    EQU 64                                    ; Size of expression buffer, in bytes
 expression_buffer         DEFS 64   
 
-OPERATOR_STACK_SIZE       EQU EXPRESSION_BUFFER_SIZE / 2            ; Used to store string of current expression being entered by the user
+OPERATOR_STACK_BYTES      EQU (EXPRESSION_BUFFER_SIZE / 2)            ; Worst case size
 operator_stack            DEFS 1 * OPERATOR_STACK_SIZE              ; 1 byte per operator
 operator_stack_top        DEFB 0                                    ; Position of top of operator stack   
 
-OUTPUT_STACK_SIZE         EQU EXPRESSION_BUFFER_SIZE / 2            ; Max number of operands in expression is half the number of characters, rounded down
-output_stack              DEFS 8 * OUTPUT_STACK_SIZE                ; 8 bytes per operand
+OUTPUT_STACK_BYTES         EQU (EXPRESSION_BUFFER_SIZE / 2)          ; Worse case size
+output_stack              DEFS 9 * OUTPUT_STACK_SIZE + 1 * OPERATOR_STACK_SIZE               ; 8 bytes per operand
 output_stack_top          DEFB 0                                    ; Position of top of output stack
 
 expression_length         DEFB 0                                    ; Length of current expression (position of null terminator)
 expression_position       DEFB 0                                    ; Position of cursor from the right
                           align
 
-calc_result               DEFW 0, 0
+CALC_HISTORY_SIZE         EQU 8                                     ; Number of previous results to store in history
+calc_history              DEFS 8 * CALC_HISTORY_SIZE                ; Circular array of previous results, 64 bit integers
+calc_history_index        DEFB 0                                    ; Index of most recent result in history
+calc_history_count        DEFB 0                                    ; Number of results
+
+calc_error_code           DEFB 0                                    ; error code, returned by calc.s
 
 ; State
 calc_state                defb CALC_IDLE
@@ -38,6 +43,15 @@ CALC_IDLE                 EQU 0
 CALC_DIGIT                EQU 1
 CALC_OPERATOR             EQU 2
 CALC_RESULT               EQU 3
+
+; Messages
+ERROR_MSG_TABLE           DEFW MSG_DIV_ZERO, MSG_INVALID_CHAR, MSG_OVERFLOW, MSG_INTERNAL
+MSG_DIV_ZERO              DEFB "Error: Div 0", 0
+MSG_INVALID_CHAR          DEFB "Error: Bad Char", 0
+MSG_OVERFLOW              DEFB "Error: Overflow", 0
+MSG_INTERNAL              DEFB "Error: Internal", 0
+                          align
+
 
                           sw ra, [sp]
 
@@ -123,20 +137,48 @@ calc_handler_end          lw ra, [sp]
 calc_render               subi sp, sp, 4
                           sw ra, [sp]
 
-                          li a0, '\f'                           ; Clear screen
+render_clear              li a0, '\f'                           ; Clear screen
                           call write_char
 
-                          la t0, expression_length              ; offset = max(0, length - LCD_COLS)
+render_expression         la t0, expression_length              ; offset = max(0, length - LCD_COLS)
                           lb t0, [t0]
                           subi t0, t0, LCD_COLS
                           bgez t0, _offset_continue
                           li t0, 0
 _offset_continue          la t1, expression_buffer
                           add a0, t1, t0                        ; t1 = address of start of string to display
-
                           call write_string
 
-                          lw ra, [sp]
+                          la t0, calc_state
+                          lb t0, [t0]
+                          li t1, CALC_RESULT
+                          bne t0, t1, render_end                ; If not in result state, continue
+
+                          li a0, '\n'                            
+                          call write_char
+
+                          la t0, calc_error_code
+                          lb t0, [t0]
+                          bnez t0, render_error                 ; If error code nonzero, render error instead
+
+render_result             la t0, calc_history                   ; If in result state, display most recent result in history
+                          la t1, calc_history_index
+                          lb t1, [t1]                           ; t1 = index of most recent result in history
+                          slli t1, t1, 3                        ; t1 = offset (index * 8)
+                          add t0, t0, t1                        ; t0 = address of most recent result in history
+                          lw a0, [t0]                           ; a0 = lower bits
+                          lw a1, 4[t0]                          ; a1 = upper bits
+                          call write_int64
+                          j render_end
+
+render_error              la t1, ERROR_MSG_TABLE
+                          subi t0, t0, 1                        ; Starts at error code 1
+                          slli t0, t0, 3                        ; t0 = offset (error code * 8)
+                          add t1, t1, t0                        ; t1 = address of error message
+                          call write_string
+
+
+render_end                lw ra, [sp]
                           addi sp, sp, 4
                           ret
 
@@ -227,7 +269,41 @@ digit_operator:
                           j calc_handler_end
 
 ; Equals -> CALC_RESULT
-digit_equals              j .                                   ; not implemented
+digit_equals              la a0, expression_buffer
+                          la a1, operator_stack
+                          la a2, output_stack
+                          call shunting_yard
+                          bnez a0, _store_error                 ; Exit early if non-zero error code
+
+                          la a0, output_stack
+                          call eval_rpn
+
+_store_result             la t0, calc_history
+                          la t1, calc_history_index
+                          lb t1, [t1]                           ; t1 = index of most recent result
+                          addi t1, t1, 1                        ; increment index
+                          andi t1, t1, CALC_HISTORY_SIZE - 1    ; wrap index (power of 2)
+                          slli t2, t1, 3                        ; t2 = offset (index * 8)
+                          add t0, t0, t2                        ; t0 = address of where to store result
+                          sw a0, [t0]                           ; Store lower bits of result
+                          sw a1, 4[t0]                          ; Store upper bits of result
+
+                          la t0, calc_history_index             ; update index
+                          sb t1, [t0]
+
+                          la t0, calc_history_count             ; history count += 1 if less than max
+                          lb t1, [t0]
+                          addi t1, t1, 1
+                          andi t1, t1, CALC_HISTORY_SIZE - 1
+                          sb t1, [t0]
+
+_store_error              la t0, calc_error_code                ; store error code, including 0 for success
+                          sb a0, [t0]                           
+
+digit_equals_end          la t0, calc_state                     ; Update state
+                          li t1, CALC_RESULT
+                          sb t1, [t0]
+                          j calc_handler_end
 
 ; Clear -> CALC_IDLE
 digit_ac                  la t0, expression_buffer
@@ -266,7 +342,16 @@ operator_ac               la t0, expression_buffer
 
 ; Result Transitions
 ; AC -> CALC_IDLE
-result_ac                 j .                                   ; not implemented
+result_ac                 la t0, expression_buffer
+                          sb zero, [t0]                         ; Null terminate buffer at start
+
+                          la t0, expression_length
+                          sb zero, [t0]                         ; Set expression length to 0
+
+                          la t0, calc_state                     ; Update state
+                          li t1, CALC_IDLE
+                          sb t1, [t0]
+                          j calc_handler_end
 
 
 ; --- Helper Functions ---
