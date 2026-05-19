@@ -94,6 +94,10 @@ write_hex_end            lw s1, 8[sp]
                          addi sp, sp, 12
                          ret
 
+; ; write_int64
+write_int64              ret
+
+
 ; write_decimal
 ; Modified version of bcd_convert to write decimal value of a0 to lcd
 ; Input: a0 = 32bit unsigned integer to write as decimal

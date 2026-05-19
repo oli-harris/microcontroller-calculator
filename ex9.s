@@ -18,7 +18,7 @@
                        include lib/lcd.s
 
 
-STACK_SIZE             EQU 64
+STACK_SIZE             EQU 128
 EXTERNAL_INTERRUPTS    EQU MASK_INTERRUPT_TIMER
 
 ; --- Global State ---
@@ -106,7 +106,7 @@ state_renderer_end     lw ra, [sp]
                        ret
 
 ; --- Pages ---
-; Each page has a handler, which is called when a button is pressed on that page, a renderer, and an initialization function.
+; Each page has a handler, a renderer, and an initialization function.
                        include pages/menu.s
                        include pages/calculator.s
                        include pages/test.s
