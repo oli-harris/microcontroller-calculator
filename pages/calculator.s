@@ -15,13 +15,14 @@
 ; --- Calc Memory ---
 EXPRESSION_BUFFER_SIZE    EQU 64                                                             ; Size of expression buffer, in bytes
 expression_buffer         DEFS 64
+                          align
 
 SHUNTING_STACK_SIZE       EQU (EXPRESSION_BUFFER_SIZE / 2)                                   ; Worst case size
-operator_stack            DEFS 1 * SHUNTING_STACK_SIZE                                       ; 1 byte per operator
-operator_stack_top        DEFB 0                                                             ; Position of top of operator stack
-
 output_stack              DEFS 8 * SHUNTING_STACK_SIZE                                       ; 8 bytes per operand
 output_stack_top          DEFB 0                                                             ; Position of top of output stack
+
+operator_stack            DEFS 1 * SHUNTING_STACK_SIZE                                       ; 1 byte per operator
+operator_stack_top        DEFB 0                                                             ; Position of top of operator stack
 
 expression_length         DEFB 0                                                             ; Length of current expression (position of null terminator)
 expression_position       DEFB 0                                                             ; Position of cursor from the right
@@ -275,10 +276,11 @@ digit_equals              la a0, expression_buffer
                           call shunting_yard
                           bnez a0, _store_error                                              ; Exit early if non-zero error code
 
-                          la a0, output_stack
-                          la a1, output_stack_top
-                          la a2, operator_stack
-                          la a3, operator_stack_top
+                          la a0, operator_stack
+                          la a1, operator_stack_top
+                          la a2, output_stack
+                          la a3, output_stack_top
+                          li a4, SHUNTING_STACK_SIZE
                           call evaluate_rpn
 
 _store_result             la t0, calc_history

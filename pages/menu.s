@@ -2,7 +2,7 @@
 ;                            Menu Page
 ;                            Oliver Harris
 ;
-; Implements a main menu page, which can be navigated with the buttons.`
+; Implements a main menu page, which can be navigated with the buttons.
 ;
 ; Last modified: 130/05/26
 ; -----------------------------------------------------------------------------
