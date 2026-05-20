@@ -72,11 +72,8 @@ start:                 la s0, FURELISE
 tune_begin             lbu a0, 0[s0]
                        lbu a1, 1[s0]
                        beqz a1, tune_end
-                       li a7, ECALL_PLAY_SOUND    ; 100ms note
-                       ecall
-
-                       call delay_ms
-                       li a0, 0                   ; Stop note
+                       slli t0, a1, BUZZER_DURATION_SHIFT
+                       or a0, a0, t0
                        li a7, ECALL_PLAY_SOUND
                        ecall
 

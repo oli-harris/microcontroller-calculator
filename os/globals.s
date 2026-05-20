@@ -9,6 +9,10 @@
 MSTACK_SIZE                    EQU 64                                    ; 64 words
 USER_BASE_ADDRESS              EQU 0x0004_0000                           ; (65,536 words)
 
+; --- Useful Bits ---
+MASK_HALFWORD                  EQU 0xFFFF
+MASK_HALFWORD_UPPER            EQU 0xFFFF0000
+
 ; --- CSR Bits ---
 MSTATUS_MPP_MACHINE            EQU 0x1800                                ; MPP bits (bits 12 & 11)
 MSTATUS_MIE                    EQU 0x8                                   ; Machine Interrupt Enable (bit 3)
@@ -39,6 +43,7 @@ DELAY_PULSE                    EQU 5                                     ; pulse
 DELAY_SEPARATE                 EQU 12                                    ; separate pulses (>= 48 cycles)
 
 LCD_RW                         EQU 0b0000_0001                           ; R/W = 1 for read, 0 for write
+
 LCD_RS                         EQU 0b0000_0010                           ; RS
 LCD_ENABLE_BUS                 EQU 0b0000_0100                           ; E = 1 to enable bus
 LCD_BUSY_FLAG                  EQU 0b1000_0000                           ; Busy flag (bit 7 of status)
@@ -66,6 +71,7 @@ TIMER_ENABLE_FLAG              EQU 0x1                                   ; Enabl
 
 TIMER_TICKS_PER_SEC            EQU 1_000_000                             ; Number of timer ticks per second
 TIMER_INIT_VALUE               EQU 0xB                                   ; Enabled, Modulus, Free Running, Interrupts Disabled
+
 
 TIMER_TICK_MS                  EQU 1 * ( TIMER_TICKS_PER_SEC / 1000 )    ; Number of timer ticks per ms
 
@@ -96,6 +102,8 @@ USER_PERIPHERAL_BASE           EQU 0x0002_0000                           ; Base 
 
 ; BUZZER
 OFFSET_BUZZER                  EQU 0                                     ; Offset for buzzer (bit 0: enable, bits 1-5: pitch)
+BUZZER_NOTE_MASK               EQU 0x3F                                  ; Mask for extracting note from input (bits 0-5)
+BUZZER_DURATION_SHIFT          EQU 16                                    ; Number of bits to shift for duration
 
 ; EXTERNAL INTERRUPTS
 MASK_INTERRUPT_USER1           EQU 0x01                                  ; (bit 0)
