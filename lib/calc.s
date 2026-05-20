@@ -21,6 +21,8 @@ ERR_OVERFLOW               EQU 1                                 ; overflow and 
 ERR_DIV_ZERO               EQU 2
 ERR_INTERNAL               EQU 3                                 ; unexpected internal error, ie. stack overflow
 
+DIV64_BITS                  EQU 64
+
 OPERAND_TYPE               EQU 0
 OPERATOR_TYPE              EQU 1
 
@@ -448,7 +450,7 @@ div_64_unsigned            li t3, 0                              ; t3 = remainde
                            li t4, 0                              ; t4 = remainder lower
                            li t5, 0                              ; t5 = quotient upper
                            li t6, 0                              ; t6 = quotient lower
-                           li t0, 64                             ; t0 = bit counter
+                           li t0, DIV64_BITS                     ; t0 = bit counter
 
 div_64_loop                srli t1, t4, 31                       ; t1 = remainder lower msb
                            slli t4, t4, 1

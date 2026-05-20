@@ -85,10 +85,10 @@ key_buffer_pop:
                                addi t1, t1, 1                          ; head = (head + 1) % KEYS_BUFFER_SIZE
                                andi t1, t1, KEYS_BUFFER_SIZE - 1
                                sb t1, KEYS_BUFFER_HEAD_OFFSET[t0]
-                               ret
+                               j key_buffer_pop_end
 
 key_buffer_pop_empty           li a0, -1
-                               ret
+key_buffer_pop_end             ret
 
 
 
@@ -112,10 +112,10 @@ KEYS_REPEAT_RESET              EQU 60
 ; Modifies: t4
 button_not_pressed             lb t4, [a0]                             ; t4 = counter for key at (row, column)
                                bgtz t4, button_not_pressed_continue    ; if counter > 0 decrement counter
-                               ret                                     ; else, continue (most likely so avoid branching)
+                               j button_not_pressed_end                ; else, continue (most likely so avoid branching)
 button_not_pressed_continue    subi t4, t4, 1
                                sb t4, [a0]
-                               ret
+button_not_pressed_end         ret
 
 
 ; button_pressed

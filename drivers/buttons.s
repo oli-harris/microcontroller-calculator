@@ -13,6 +13,10 @@
 ; button_scanner
 ; Purpose: Scans 4 buttons, and adds to key buffer with debounce functionality
 ; Loop unrolled for efficiency
+; Input: None
+; Output: None
+; Note: uses return address to store next instruction, to avoid branching and save instructions
+; Modifies: a0, a2, t0, t1, t2
 button_scanner:
                       subi sp, sp, 4
                       sw ra, [sp]

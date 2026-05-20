@@ -11,7 +11,10 @@
 ; keyboard_scanner
 ; Purpose: Scans each row and column of 16-digit keyboard,
 ; and calls button_pressed or button_not_pressed
+; Input: None
+; Output: None
 ; Modifies: a0, a2, t0-t5
+; Preserves: ra
 keyboard_scanner:
                          subi sp, sp, 4
                          sw ra, [sp]
@@ -44,9 +47,12 @@ keyboard_columns_loop    mv t4, t2
                          add a0, a0, t5                       ; (a0 += row * 4)
                          add a0, a0, t3                       ; (a0 += column); a0 = pointer to counter for key at (row, column)
 
-                         la ra, keyboard_next_column
-                         bnez t4, button_pressed              ; if button value is 1, button pressed
-                         j button_not_pressed                 ; else button not pressed (most likely, so avoid branching)
+                         bnez t4, keyboard_pressed            ; if button value is 1, button pressed
+                         call button_not_pressed              ; else button not pressed (most likely, so avoid branching)
+                         j keyboard_next_column
+
+keyboard_pressed          call button_pressed
+                         j keyboard_next_column
 
 keyboard_next_column     addi t3, t3, 1
                          li t5, KEYBOARD_COLUMNS
