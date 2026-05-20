@@ -17,12 +17,12 @@ EXPRESSION_BUFFER_SIZE    EQU 64                                                
 expression_buffer         DEFS 64
                           align
 
-SHUNTING_STACK_SIZE       EQU (EXPRESSION_BUFFER_SIZE / 2)                                   ; Worst case size
-output_stack              DEFS 8 * SHUNTING_STACK_SIZE                                       ; 8 bytes per operand
-output_stack_top          DEFB 0                                                             ; Position of top of output stack
+MAX_OPERATORS             = EXPRESSION_BUFFER_SIZE / 2                                       ; Max number of operators in expression, worst case every other char is operator
+MAX_OPERANDS              = EXPRESSION_BUFFER_SIZE / 2                                       ; Max number of operands in expression, worst case every other char is operator
 
-operator_stack            DEFS 1 * SHUNTING_STACK_SIZE                                       ; 1 byte per operator
-operator_stack_top        DEFB 0                                                             ; Position of top of operator stack
+OUTPUT_STACK_SIZE         EQU MAX_OPERATORS + MAX_OPERANDS                                   ; Worst case size
+output_stack              DEFS 12 * OUTPUT_STACK_SIZE                                        ; RPN output stack
+operator_stack            DEFS 1 * MAX_OPERATORS                                             ; temporary stack before pushed to output stack, 1 byte per operator
 
 expression_length         DEFB 0                                                             ; Length of current expression (position of null terminator)
 expression_position       DEFB 0                                                             ; Position of cursor from the right
@@ -34,7 +34,7 @@ calc_history_head         DEFB 0                                                
 calc_history_count        DEFB 0                                                             ; Size of array (0 to size-1)
 
 calc_error_code           DEFB 0                                                             ; error code, returned by calc.s
-
+pages/dummy.s
 ; State
 calc_state                defb CALC_IDLE
                           align
@@ -269,9 +269,9 @@ digit_operator:
 ; Equals -> CALC_RESULT
 digit_equals              la a0, expression_buffer
                           la a1, operator_stack
-                          la a2, operator_stack_top
+                          li a2, 0                                                           ; head = 0
                           la a3, output_stack
-                          la a4, output_stack_top
+                          li a4, 0                                                           ; head = 0
                           li a5, SHUNTING_STACK_SIZE
                           call shunting_yard
                           bnez a2, _store_error                                              ; Exit early if non-zero error code
@@ -279,13 +279,13 @@ digit_equals              la a0, expression_buffer
                           la a0, operator_stack
                           la a1, operator_stack_top
                           la a2, output_stack
-                          la a3, output_stack_top
+                          la a3, output_stack-head
                           li a4, SHUNTING_STACK_SIZE
                           call evaluate_rpn
 
                           la t0, operator_stack_top
                           sb zero, [t0]                                                      ; Clear operator stack
-                          la t0, output_stack_top
+                          la t0, output_stack-head
                           sb zero, [t0]                                                      ; Clear output stack
 
 
