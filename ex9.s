@@ -67,7 +67,7 @@ main_loop:
 main_global_handler      subi sp, sp, 4
                          sw ra, [sp]
 
-                         call button_chirp                       ; Play note corresponding to button press
+;  call button_chirp                       ; Play note corresponding to button press
 
                          li t0, KEY_MENU                         ; Menu always takes to home
                          beq a0, t0, _main_global_menu
