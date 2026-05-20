@@ -158,7 +158,7 @@ write_decimal_done        lw s2, 12[sp]
 ; Input: a0 = character to write
 ; Output: None
 ; Modifies: a0, a1, a7, t0, t1
-write_char:0/
+write_char:
                           subi sp, sp, 4
                           sw ra, [sp]
                           ori a0, a0, WRITE_COMMAND                        ; write command
@@ -225,58 +225,4 @@ _write_data               li a7, ECALL_LCD_WRITE
                           lw ra, [sp]
                           addi sp, sp, 4
                           ret
-                          slli a0, a0, 2
-                          add t0, t0, a0
-                          lw t0, [t0]
-                          jalr t0
 
-; Jump table for special characters handling
-specials_table            defw _write_backspace
-                          defw _write_tab
-                          defw _write_line_feed
-                          defw _write_vertical_tab
-                          defw _write_form_feed
-                          defw _write_carriage_return
-
-_write_backspace:
-                          li a0, LCD_CMD_LEFT                              ; move cursor left
-                          j _write_data
-
-
-_write_tab:
-                          li a0, LCD_CMD_RIGHT                             ; move cursor right
-                          j _write_data
-
-_write_line_feed:
-                          li a0, LCD_CMD_NEWLINE                           ; move cursor down
-                          la t0, lcd_line_pos                              ; stores line pos 1
-                          li t1, 1
-                          sw t1, [t0]
-                          j _write_data
-
-_write_vertical_tab:
-                          li a0, LCD_CMD_VTAB                              ; move cursor up
-                          la t0, lcd_line_pos                              ; stores line pos 0
-                          sw zero, [t0]
-                          j _write_data
-
-_write_form_feed:
-                          li a0, LCD_CMD_CLEAR                             ; clear display
-                          la t0, lcd_line_pos                              ; stores line pos 0
-                          sw zero, [t0]
-                          j _write_data
-
-_write_carriage_return:
-                          lw t0, lcd_line_pos                              ; check if currently on line 1
-                          bnez t0, _return_line_1
-_return_line_0            li a0, LCD_CMD_VTAB                              ; return to line 0
-                          j _write_data
-_return_line_1            li a0, LCD_CMD_NEWLINE                           ; return to line 1
-                          j _write_data
-
-_write_data               li a7, ECALL_LCD_WRITE
-                          ecall                                            ; ecall write to lcd
-
-                          lw ra, [sp]
-                          addi sp, sp, 4
-                          ret
