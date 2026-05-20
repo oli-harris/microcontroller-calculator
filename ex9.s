@@ -2,15 +2,17 @@
 ;                               Exercise 9 - Project
 ;                                    Oliver Harris
 ;
-; A calculator with modes for BODMAS, history, and debug tests.
+; A multi-modal program, with four pages:
+; 1. Menu page: allows navigation to other pages.
+; 2. Calculator page: evaluates 64-bit signed expressions, supporting +, -, *, /.
+; 3. History page: displays previous calculations.
+; 4. Tests pages: comprehensive test suite displaying pass/failure of functions.
 ;
 ; Uses four integrated buttons to select mode.
 ; SW1: Menu           SW2: OK
 ; SW3: Left           SW4: Right
 ;
-;
-;
-; Last Modified: 27/04/2026
+; Last Modified: 20/05/2026
 ; ------------------------------------------------------------------------------------------
 
 ; --- Library Includes ---
@@ -67,7 +69,7 @@ main_loop:
 main_global_handler      subi sp, sp, 4
                          sw ra, [sp]
 
-;  call button_chirp                       ; Play note corresponding to button press
+                         call button_chirp                       ; Play note corresponding to button press
 
                          li t0, KEY_MENU                         ; Menu always takes to home
                          beq a0, t0, _main_global_menu

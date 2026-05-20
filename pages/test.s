@@ -10,7 +10,7 @@
 ; Known issues: may cause 5 and 1 errors.*
 ; Requires: calc.s and calculator.s page
 ;
-; Last modified: 13/05/26
+; Last modified: 20/05/26
 ; -----------------------------------------------------------------------------
 
 ; --- Test Pages ---
@@ -351,13 +351,13 @@ test_mul_4            li a0, 0
 
 
 test_div_1_upper      DEFW 0
-test_div_1_lower      DEFW 4
+test_div_1_lower      DEFW 5
 test_div_1_str        defb "Div64 lower", 0
                       align
 
-test_div_1            li a0, 12
+test_div_1            li a0, 100
                       li a1, 0
-                      li a2, 3
+                      li a2, 20
                       li a3, 0
                       call div_64
                       j test_ret

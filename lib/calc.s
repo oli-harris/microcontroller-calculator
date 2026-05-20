@@ -10,7 +10,7 @@
 ; - Operator stack: 1 byte per operator, null terminated
 ; - Output stack: 8 bytes per operand, null terminated
 ;
-; Last modified: 15/05/26
+; Last modified: 20/05/26
 ;
 ; -----------------------------------------------------------------------------------
 
@@ -27,9 +27,6 @@ OPERATOR_TYPE              EQU 1
 PRECEDENCE_MUL_DIV         EQU 2
 PRECEDENCE_ADD_SUB         EQU 1
 PRECEDENCE_INVALID         EQU 0
-
-INT32_MIN                  EQU 0x8000_0000
-UINT32_MAX                 EQU 0xFFFF_FFFF
 
 ; --- Helper Functions ---
 ; get_precedence
@@ -75,7 +72,8 @@ get_precedence_done        ret
 ;
 ; Output: a0 = output stack head, a2 = error code (register used for consistency with all functions in library)
 shunting_yard:
-                           subi sp, sp, 24
+                           subi sp, sp, 28
+                           sw s5, 24[sp]
                            sw s4, 20[sp]
                            sw s3, 16[sp]
                            sw s2, 12[sp]
@@ -89,30 +87,30 @@ shunting_yard:
                            mv s3, a3                             ; s3 = pointer to output stack base
                            mv s4, a4                             ; s4 = output stack head
 
-parse_start                lbu t0, 0[s0]                         ; t0 = char
-                           beqz t0, parse_err_success            ; if null terminator, done parsing
+parse_start                lbu s5, 0[s0]                         ; s5 = char
+                           beqz s5, parse_err_success            ; if null terminator, done parsing
 
                            li t1, '0'
-                           blt t0, t1, parse_operator_loop       ; if character < '0', not a digit
+                           blt s5, t1, parse_operator_loop       ; if character < '0', not a digit
                            li t1, '9'
-                           bgt t0, t1, parse_operator_loop       ; if character > '9', not a digit
+                           bgt s5, t1, parse_operator_loop       ; if character > '9', not a digit
 
 parse_digit                li a0, 0                              ; a0 = value lower
                            li a1, 0                              ; a1 = value upper
 
-parse_digit_loop           lbu t0, 0[s0]                         ; t0 = character
+parse_digit_loop           lbu s5, 0[s0]                         ; s5 = character
 
                            li t1, '0'
-                           blt t0, t1, parse_digit_done          ; if character < '0', done parsing number
+                           blt s5, t1, parse_digit_done          ; if character < '0', done parsing number
                            li t1, '9'
-                           bgt t0, t1, parse_digit_done          ; if character > '9', done parsing number
+                           bgt s5, t1, parse_digit_done          ; if character > '9', done parsing number
 
                            li a2, 10
                            li a3, 0
                            call mul_64                           ; value *= 10
                            bnez a2, parse_err_num_overflow       ; check for errors
 
-                           subi a2, t0, '0'                      ; convert character to integer
+                           subi a2, s5, '0'                      ; convert character to integer
                            call add_64                           ; value += digit
                            bnez a2, parse_err_num_overflow       ; check for errors
 
@@ -139,7 +137,7 @@ _compare_precedence        mv a0, t1
                            call get_precedence
                            beqz a0, parse_err_invalid            ; if invalid operator, error
                            mv a1, a0                             ; a1 = top precedence
-                           mv a0, t0
+                           mv a0, s5
                            call get_precedence                   ; a0 = current precedence
                            beqz a0, parse_err_invalid            ; if invalid operator, error
 
@@ -155,12 +153,12 @@ _pop_operator              subi s2, s2, 1                        ; else: pop ope
                            addi s4, s4, 1                        ; increment output stack top
                            j parse_operator_loop
 
-parse_operator_done        mv a0, t0
+parse_operator_done        mv a0, s5
                            call get_precedence                   ; reuse get_precedence to check operator validity
                            beqz a0, parse_err_invalid            ; if invalid operator, error
 
 _push_operator             add t1, s1, s2
-                           sb t0, 0[t1]                          ; push operator to operator stack
+                           sb s5, 0[t1]                          ; push operator to operator stack
                            addi s2, s2, 1                        ; increment operator stack top
 
                            addi s0, s0, 1                        ; move to next character
@@ -197,7 +195,8 @@ parse_end                  lw ra, 0[sp]
                            lw s2, 12[sp]
                            lw s3, 16[sp]
                            lw s4, 20[sp]
-                           addi sp, sp, 24
+                           lw s5, 24[sp]
+                           addi sp, sp, 28
                            ret
 
 
@@ -337,7 +336,7 @@ add_64:
 
 
 ; sub_64
-; Purpose: Subtract two 64 bit integers using borrow, with underflow detection.
+; Purpose: Subtract two 64 bit integers using borrow; note: no underflow detection.
 ; Formula: l_res = l_1 - l2, u_res = u_1 - u_2 - borrow, borrow = 1 if l_1 < l_2
 ; Input: a0 = operand 1 lower, a1 = operand 1 upper, a2 = operand 2 lower, a3 = operand 2 upper
 ; Output: a0 = result lower, a1 = result upper, a2 = error code
@@ -349,7 +348,7 @@ sub_64
                            sub t2, a1, a3                        ; t2 = upper bits difference
                            sub a1, t2, t1                        ; subtract borrow from upper bits
 
-                           sltu a2, t2, a1                       ; a2 = 1 if overflow in upper bits
+                           li a2, 0                              ; could implement signed underflow detection here
                            mv a0, t0
                            ret
 
@@ -413,6 +412,8 @@ mul64_end                  mv a0, s2
 ; Purpose: implements signed long division for 64 bit integers.
 ; Returns quotient of operand 1 / operand 2
 ; Cost: expensive, requires 64 iterations in worst case
+; Input: a0 = operand 1 lower, a1 = operand 1 upper, a2 = operand 2 lower, a3 = operand 2 upper
+; Output: a0 = result lower, a1 = result upper, a2 = error code
 div_64                     or t0, a2, a3
                            beqz t0, div_64_by_zero               ; if divisor is zero, error
 
@@ -471,13 +472,14 @@ div_64_loop                srli t1, t4, 31                       ; t1 = remainde
                            bltu a3, t3, div_64_ge
                            bltu t4, a2, div_64_loop_next
 
-div_64_ge                  sub t4, t4, a2                        ; remainder lower -= divisor lower
-                           sltu t1, t4, a2                       ; t1 = borrow
+div_64_ge                  mv t1, t4                             ; save remainder lower before subtraction
+                           sub t4, t4, a2                        ; remainder lower -= divisor lower
+                           sltu t1, t1, a2                       ; t1 = borrow (orig lower < divisor lower)
                            sub t3, t3, a3                        ; remainder upper -= divisor upper
                            sub t3, t3, t1                        ; remainder upper -= borrow
                            ori t6, t6, 1                         ; set quotient bit
 
-div_64_loop_next           addi t0, t0, -1
+div_64_loop_next           subi t0, t0, 1
                            bnez t0, div_64_loop
 
                            mv a0, t6                             ; a0 = quotient lower

@@ -2,7 +2,7 @@
 ;      OS Global Constants
 ;        Oliver Harris
 ;
-;  Last Modified: 08/05/2026
+;  Last Modified: 20/05/2026
 ;
 ; -----------------------------
 
@@ -12,6 +12,9 @@ USER_BASE_ADDRESS              EQU 0x0004_0000                           ; (65,5
 ; --- Useful Bits ---
 MASK_HALFWORD                  EQU 0xFFFF
 MASK_HALFWORD_UPPER            EQU 0xFFFF0000
+
+INT32_MIN                      EQU 0x8000_0000
+UINT32_MAX                     EQU 0xFFFF_FFFF
 
 ; --- CSR Bits ---
 MSTATUS_MPP_MACHINE            EQU 0x1800                                ; MPP bits (bits 12 & 11)
