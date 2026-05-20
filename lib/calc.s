@@ -19,7 +19,7 @@
 ERR_SUCCESS                EQU 0
 ERR_OVERFLOW               EQU 1                                 ; overflow and underflow treated as same
 ERR_DIV_ZERO               EQU 2
-ERR_INTERNAL               EQU 4                                 ; unexpected internal error, ie. stack overflow
+ERR_INTERNAL               EQU 3                                 ; unexpected internal error, ie. stack overflow
 
 OPERAND_TYPE               EQU 0
 OPERATOR_TYPE              EQU 1
