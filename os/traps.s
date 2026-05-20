@@ -144,7 +144,10 @@ trap_handler_ex_interrupt_end    lw ra, [sp]
 
 ; trap_handler_halt
 ; Purpose: Halts program, displays mcause, mstatus, mepc for debugging
-trap_handler_halt                csrr t0, MCAUSE                                   ; display debug info
+trap_handler_halt                la t0, USER_PERIPHERAL_BASE
+                                 sw zero, OFFSET_BUZZER[t0]                        ; Shut buzzer up on halt
+
+                                 csrr t0, MCAUSE                                   ; display debug info
                                  csrr t1, MSTATUS
                                  csrr t2, MEPC
                                  j .                                               ; halts
