@@ -73,6 +73,7 @@ get_precedence_done        ret
 ;        Operator stack: 1 byte per operator, head points to next free position.
 ;
 ; Output: a0 = output stack head, a2 = error code (register used for consistency with all functions in library)
+; Modifies: t0, t1, t2
 shunting_yard:
                            subi sp, sp, 28
                            sw s5, 24[sp]
@@ -209,6 +210,7 @@ parse_end                  lw ra, 0[sp]
 ;                           if operator: pops two operands, evaluates, and pushes result back to stack
 ; Input: a0 = pointer to output stack, a1 = size of output stack
 ; Output: a0 = result lower, a1 = result upper, a2 = error code
+; Modifies: t0, t1, t2
 evaluate_rpn:              subi sp, sp, 12
                            sw s1, 8[sp]
                            sw s0, 4[sp]
@@ -324,6 +326,7 @@ evaluate_end               lw ra, 0[sp]
 ; Formula: l_res = l_1 + l2, u_res = u_1 + u_2 + carry, carry = 1 if l_res < l_1
 ; Input: a0 = operand 1 lower, a1 = operand 1 upper, a2 = operand 2 lower, a3 = operand 2 upper
 ; Output: a0 = result lower, a1 = result upper, a2 = error code
+; Modifies: t0, t1, t2
 ; Cost: cheap
 add_64:
                            add t0, a0, a2                        ; t0 = lower bits sum
@@ -342,6 +345,7 @@ add_64:
 ; Formula: l_res = l_1 - l2, u_res = u_1 - u_2 - borrow, borrow = 1 if l_1 < l_2
 ; Input: a0 = operand 1 lower, a1 = operand 1 upper, a2 = operand 2 lower, a3 = operand 2 upper
 ; Output: a0 = result lower, a1 = result upper, a2 = error code
+; Modifies: t0, t1, t2
 ; Cost: cheap
 sub_64
                            sub t0, a0, a2                        ; t0 = lower bits difference
@@ -360,6 +364,7 @@ sub_64
 ; if op2 != 0 and res / op2 != op1, then overflow
 ; Input: a0 = operand 1 lower, a1 = operand 1 upper, a2 = operand 2 lower, a3 = operand 2 upper
 ; Output: a0 = result lower, a1 = result upper, a2 = error code
+; Modifies: t0, t1
 ; Cost: very expensive, requires both multiplication and division for overflow detection
 mul_64
                            subi sp, sp, 20
@@ -414,8 +419,10 @@ mul64_end                  mv a0, s2
 ; Purpose: implements signed long division for 64 bit integers.
 ; Returns quotient of operand 1 / operand 2
 ; Cost: expensive, requires 64 iterations in worst case
+; Note: should work on CPUs without hardware multiplication or division.
 ; Input: a0 = operand 1 lower, a1 = operand 1 upper, a2 = operand 2 lower, a3 = operand 2 upper
 ; Output: a0 = result lower, a1 = result upper, a2 = error code
+; Modifies: t0-t6, a3 used as extra temporary
 div_64                     or t0, a2, a3
                            beqz t0, div_64_by_zero               ; if divisor is zero, error
 

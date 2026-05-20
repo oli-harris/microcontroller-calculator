@@ -36,6 +36,8 @@ test_buttons_end      defw test_right
 ; test_handler
 ; Purpose: Handle button presses, then call test_render to update test page.
 ; Input: a0 = button pressed
+; Output: None
+; Modifies: t0, t1
 test_handler          subi sp, sp, 4
                       sw ra, [sp]
 
@@ -55,6 +57,9 @@ test_handler_end      lw ra, [sp]
 
 ; test_init
 ; Purpose: Initialise test page and render it for the first time.
+; Input: None
+; Output: None
+; Modifies: t0
 test_init             subi sp, sp, 4
                       sw ra, [sp]
 
@@ -69,7 +74,9 @@ test_init             subi sp, sp, 4
 
 ; test_render
 ; Purpose: Render test page based on current state and test page.
-; Modifies: t0, a0, a1
+; Input: None
+; Output: None
+; Modifies: t0, t1, a0, a1
 test_render           subi sp, sp, 8
                       sw s0, 4[sp]
                       sw ra, [sp]
@@ -118,7 +125,9 @@ test_home             ret
 
 ; test_okay
 ; Purpose: Run test, verify a0 and a1 values, and update PASS/FAIL
-; For debugging, place a breakpoint and check value of registers a0 and a1
+; Note: For debugging, place a breakpoint on test_ret and check value of registers a0 and a1
+; Input/Output: None
+; Modifies: t0, t1
 test_okay:            subi sp, sp, 8
                       sw s0, 4[sp]
                       sw ra, [sp]
@@ -164,7 +173,9 @@ test_okay_end         la t1, TESTS_RESULTS                                      
 
 
 ; test_left
-; Purpose: Handler for left button, decrements menu page without wrapping.
+; Purpose: Handler for left button, decrements menu page without wrapping
+; Input/Output: None
+; Modifies: t0, t1
 test_left:
                       la t0, current_test_page
                       lb t1, [t0]                                                                ; t1 = current menu page
@@ -175,6 +186,8 @@ test_left_end         ret
 
 ; test_right
 ; Purpose: Handler for right button, increments menu page without wrapping.
+; Input/Output: None
+; Modifies: t0, t1, t2
 test_right:
                       la t0, current_test_page
                       lb t1, [t0]
@@ -215,6 +228,10 @@ TESTS_RESULTS         defb 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 TEST_PAGES            EQU (TESTS_TABLE_END - TESTS_TABLE) / 16
 
 ; Test Functions
+; For each test:
+; Input: None
+; Output: a0, a1 = values to verify against table
+
 test_add_1_upper      DEFW 0
 test_add_1_lower      DEFW 3_000_000_000
 test_add_1_str        defb "Add64 lower", 0
@@ -226,7 +243,6 @@ test_add_1            li a0, 1_000_000_000
                       li a3, 0
                       call add_64
                       j test_ret
-; test 2
 test_add_2_upper      DEFW 1
 test_add_2_lower      DEFW 0x00000020
 test_add_2_str        defb "Add64 carry", 0
@@ -390,9 +406,7 @@ test_div_3            li a0, 1
                       li a1, 0
                       j test_ret
 
-; --- Calc tests ---
-
-
+; calc.s tests
 test_eval_1_buffer    defb "3+8*4-2", 0
                       align
 test_eval_1_upper     DEFW 0

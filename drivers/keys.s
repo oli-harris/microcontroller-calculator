@@ -4,7 +4,7 @@
 ;
 ; Implements a buffer for pressed keys, which can be popped from by an ecall.
 ; Any button peripheral can call button_pressed and button_not_pressed to
-; implements debouncing, auto-repeat, and rollover functionality.
+; implement debouncing, auto-repeat, and rollover functionality.
 ;
 ; Known limitations: Key counter buffer must be stored sequentially, as
 ; their pointer values are used to calculate key value.

@@ -12,7 +12,7 @@
 ;
 ; Uses: CALC_HISTORY_SIZE, calc_history, calc_history_head, calc_history_count
 ;
-; Last modified: 13/05/26
+; Last modified: 20/05/26
 ; -----------------------------------------------------------------------------
 
 ; --- Memory ---
@@ -32,6 +32,8 @@ HISTORY_PAGE_MSG           DEFB "\fHistory (", 0
 
 ; history_init
 ; Purpose: Initialise history page.
+; Input/Output: None
+; Modifies: t0
 history_init               subi sp, sp, 4
                            sw ra, [sp]
 
@@ -46,6 +48,8 @@ history_init               subi sp, sp, 4
 ; history_handler
 ; Purpose: Handle button presses
 ; Input: a0 = button pressed
+; Output: None
+; Modifies: t0, t1
 history_handler            subi sp, sp, 4
                            sw ra, [sp]
 
@@ -66,6 +70,8 @@ history_handler_end        lw ra, [sp]
 
 ; history_render
 ; Purpose: Render history page based on current state and history.
+; Input/Output: None
+; Modifies: t0, t1, t2, a0, a1
 history_render:            subi sp, sp, 4
                            sw ra, [sp]
 
@@ -109,12 +115,12 @@ history_render_page        la a0, HISTORY_PAGE_MSG                              
                            lw a0, [t0]                                           ; lower entry
                            lw a1, 4[t0]                                          ; upper entry
 
-                           li t3, 0
-                           beq a1, t3, _history_render_decimal
-                           li t3, UINT32_MAX
-                           beq a1, t3, _history_render_decimal
+                           li t2, 0
+                           beq a1, t2, _history_render_decimal
+                           li t2, UINT32_MAX
+                           beq a1, t2, _history_render_decimal
 
-_history_render_hex        mv t3, a0
+_history_render_hex        mv t3, a0                                             ; preserve lower, t3 preserved through calls
                            mv a0, a1
                            li a1, 8
                            call write_hex
@@ -139,11 +145,13 @@ history_render_end         lw ra, [sp]
 ; --- Button Handlers ---
 
 ; history_home
-; Purpose: dummy, not called
+; Purpose: dummy for table, not called
 history_home               ret
 
 ; history_left
 ; Purpose: Move left in history, if possible
+; Input/Output: None
+; Modifies: t0, t1
 history_left:
                            la t0, history_page
                            lbu t1, [t0]
@@ -155,6 +163,8 @@ history_left_end           ret
 
 ; history_right
 ; Purpose: Move right in history, if possible
+; Input/Output: None
+; Modifies: t0, t1, t2
 history_right:
                            la t0, history_page
                            lbu t1, [t0]
@@ -168,7 +178,9 @@ history_right_end          ret
 
 ; history_clear
 ; Purpose: Clear history circular array, reset index and count, and return to first page.
-; Note: not a secure clear, result still exists in memory.
+; Note: not a secure clear, result still exists in memory (acceptable)
+; Input/Output: None
+; Modifies: t0
 history_clear:
                            la t0, calc_history_head
                            sb zero, [t0]                                         ; Reset index

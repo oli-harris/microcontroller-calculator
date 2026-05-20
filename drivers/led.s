@@ -1,5 +1,12 @@
-; --- LED Ecalls ---
+; ------------------------------------------------
+;                    LED Driver
+;                   Oliver Harris
+;
+; Basic ecall to set LEDs colour.
+; (this header takes more lines then the code) 
+;
 ; Last modified: 08/05/26
+; ------------------------------------------------
 
 ; ecall_set_leds
 ; Purpose: Set LEDs according to input

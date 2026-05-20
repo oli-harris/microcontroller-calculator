@@ -8,9 +8,11 @@
 ; 3. History page: displays previous calculations.
 ; 4. Tests pages: comprehensive test suite displaying pass/failure of functions.
 ;
-; Uses four integrated buttons to select mode.
-; SW1: Menu           SW2: OK
-; SW3: Left           SW4: Right
+; This file contains the main loop, and calls the current page's handler and renderer
+; from the state table.
+; Pages can easily be added in the pages/ directory, by implementing standard functions
+; and adding to the tables.
+;
 ;
 ; Last Modified: 20/05/2026
 ; ------------------------------------------------------------------------------------------
@@ -19,15 +21,18 @@
                          include os/init.s
                          include lib/lcd.s
 
-
 STACK_SIZE               EQU 128
 EXTERNAL_INTERRUPTS      EQU MASK_INTERRUPT_TIMER
 
-; --- Global State ---
+; --- Constants ---
 STATE_MENU               EQU 0
 STATE_DEBUG              EQU 1
 KEY_MENU                 EQU 16
 
+BUTTON_NOTE_DURATION     EQU 80
+BUTTON_NOTES             EQU 8
+
+; --- Variables ---
 
 current_state            DEFB STATE_MENU
                          align
@@ -40,8 +45,6 @@ state_table              defw menu_handler, menu_render
 
 BUTTON_NOTES_TABLE       defb 1, 3, 5, 8, 10, 13, 15, 17         ; 8 notes from C major pentatonic
                          align
-BUTTON_NOTE_DURATION     EQU 80
-BUTTON_NOTES             EQU 8
 
 ; --- Main Loop Logic ---
 
@@ -63,25 +66,6 @@ main_loop:
                          call state_handler                      ; Call button handler
                          call state_renderer                     ; Call renderer
                          j main_loop
-
-
-
-main_global_handler      subi sp, sp, 4
-                         sw ra, [sp]
-
-                         call button_chirp                       ; Play note corresponding to button press
-
-                         li t0, KEY_MENU                         ; Menu always takes to home
-                         beq a0, t0, _main_global_menu
-                         j _main_global_menu_end
-
-
-_main_global_menu        call global_menu_handler
-                         j _main_global_menu_end
-
-_main_global_menu_end    lw ra, [sp]
-                         addi sp, sp, 4
-                         ret
 
 
 ; button_chirp
@@ -108,31 +92,43 @@ button_chirp:            subi sp, sp, 8
                          addi sp, sp, 8
                          ret
 
+; --- Global Handlers & Renderers ---
 
-; global_menu_handler
-; Purpose: Handle menu button presses, which should work on any page, and return to main
-global_menu_handler:     subi sp, sp, 4
+; main_global_handler
+; Purpose: Handle button presses before individual page handlers.
+; Input: a0 = button pressed
+; Output: None
+; Modifies: t0
+main_global_handler      subi sp, sp, 4
                          sw ra, [sp]
 
-                         call menu_home
-                         call state_renderer
+                         call button_chirp                       ; Play note corresponding to button press
 
-                         lw ra, [sp]
+                         li t0, KEY_MENU                         ; SW0 (Menu button) always takes to home
+                         beq a0, t0, global_menu_handler
+                         j main_global_handler_end
+
+global_menu_handler      call menu_home
+                         call state_renderer
+                         j main_global_handler_end
+
+main_global_handler_end  lw ra, [sp]
                          addi sp, sp, 4
                          ret
 
 
 ; state_handler
-; Purpose: Call state handler
-; Input: a0 = button pressed (1-20 expected)
+; Purpose: Call page state handler
 ; Calls functions with a0 = button pressed
+; Input: a0 = button pressed (1-20 expected)
+; Output: None
+; Modifies: t0, t1
 state_handler:
                          subi sp, sp, 4
                          sw ra, [sp]
 
                          la t0, current_state
                          lb t0, [t0]                             ; t0 = current state
-                         la ra, state_handler_end                ; return to end of state switch after handling button press
                          la t1, state_table
                          slli t0, t0, 3                          ; t0 = current state * 8
                          add t0, t0, t1                          ; t0 = pointer to table appropriate handler
@@ -145,14 +141,17 @@ state_handler_end        lw ra, [sp]
                          ret
 
 ; state_renderer
-; Purpose: Call state renderer, separate from handler in case state changes after handling button press.
+; Purpose: Call page state renderer.
+; Allows rendering to be separated from handling for any page, making code cleaner and more modular.
+; Input: None
+; Output: None
+; Modifies: t0, t1
 state_renderer:
                          subi sp, sp, 4
                          sw ra, [sp]
 
                          la t0, current_state
                          lb t0, [t0]                             ; t0 = current state
-                         la ra, state_renderer_end               ; return to end of state switch after rendering page
                          la t1, state_table
                          slli t0, t0, 3                          ; t0 = current state * 8
                          add t0, t0, t1                          ; t0 = pointer to table appropriate renderer

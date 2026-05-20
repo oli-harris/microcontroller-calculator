@@ -4,7 +4,11 @@
 ;
 ; Implements a main menu page, which can be navigated with the buttons.
 ;
-; Last modified: 130/05/26
+; On-Board Buttons:
+; SW1: Menu (always)     SW2: OK
+; SW3: Left              SW4: Right
+;
+; Last modified: 13/05/26
 ; -----------------------------------------------------------------------------
 
 ; --- Menu Memory ---
@@ -37,6 +41,9 @@ menu_buttons_end     defw menu_right
 
 ; menu_init
 ; Purpose: Initialise menu page and render first page.
+; Input: None
+; Output: None
+; Modifies: t0
 menu_init:
                      subi sp, sp, 4
                      sw ra, [sp]
@@ -53,6 +60,8 @@ menu_init:
 ; menu_handler
 ; Purpose: Handle button presses, then call menu_render to update menu page.
 ; Input: a0 = button pressed
+; Output: None
+; Modifies: t0, t1
 menu_handler         subi sp, sp, 4
                      sw ra, [sp]
 
@@ -73,6 +82,9 @@ menu_handler_end     lw ra, [sp]
 
 ; menu_render
 ; Purpose: Render menu page based on current state and menu page.
+; Input: None
+; Output: None
+; Modifies: t0, t1, a0
 menu_render          subi sp, sp, 4
                      sw ra, [sp]
 
@@ -97,6 +109,8 @@ menu_render          subi sp, sp, 4
 
 ; menu_home
 ; Purpose: Handler for home button, switches to to menu and resets menu page to 0.
+; Input/Output: None
+; Modifies: t0
 menu_home:
                      la t0, current_state
                      sb zero, [t0]                                   ; Set state to menu
@@ -106,6 +120,8 @@ menu_home:
 
 ; menu_okay
 ; Purpose: Handler for okay button, selects current menu page and calls init function.
+; Input/Output: None
+; Modifies: t0, t1
 menu_okay:
                      subi sp, sp, 4
                      sw ra, [sp]
@@ -128,6 +144,8 @@ menu_okay:
 
 ; menu_left
 ; Purpose: Handler for left button, decrements menu page without wrapping.
+; Input/Output: None
+; Modifies: t0, t1
 menu_left:
                      la t0, menu_current_page
                      lb t1, [t0]                                     ; t1 = current menu page
@@ -138,6 +156,8 @@ menu_left_end        ret
 
 ; menu_right
 ; Purpose: Handler for right button, increments menu page without wrapping.
+; Input/Output: None
+; Modifies: t0, t1, t2
 menu_right:
                      la t0, menu_current_page
                      lb t1, [t0]

@@ -2,12 +2,13 @@
 ;                                      Timer Driver
 ;                                      Oliver Harris
 ;
-; Handles interrupts, and calls functiions at given intervals.
+; Handles interrupts, and calls functions at 1ms or 5ms intervals. 
+; Extendible to call functions at other intervals.
 ;
 ;
 ; Note: ideally this would call timer_tick, to separate interrupt handling and functionality,
 ; However this is unnecessary overhead, so the functionality is included in the driver instead.
-; Last modified: 13/05/26
+; Last modified: 20/05/26
 ;
 ; ------------------------------------------------------------------------------------------------
 

@@ -1,12 +1,13 @@
 ; -----------------------------------------------------------------------------
-;                              calc Page
+;                              Calculator Page
 ;                               Oliver Harris
 ;
-; Implements the calc page, supporting 64 bit integer calculations, with
-; correct ordering of operations, with addition, subtraction, multiplication,
+; Implements the calculator page. Supports 64 bit integer calculations with
+; correct ordering of operations for addition, subtraction, multiplication,
 ; and division.
 ; Note, over 32 bits the result is displayed in hexadecimal as the LCD does
 ; not have enough columns to display full value.
+; Below 32 bits, results are displayed as a signed decimal.
 ;
 ; Last modified: 20/05/26
 ; -----------------------------------------------------------------------------
@@ -14,68 +15,22 @@
 ; --- Library Includes ---
                           include ../lib/calc.s
 
-; --- Calc Memory ---
+; --- Calc Constants ---
 EXPRESSION_BUFFER_SIZE    EQU 64                                           ; Size of expression buffer, in bytes
-expression_buffer         DEFS 64
-                          align
 
 MAX_OPERATORS             EQU EXPRESSION_BUFFER_SIZE / 2                   ; Max number of operators in expression, worst case every other char is operator
 MAX_OPERANDS              EQU EXPRESSION_BUFFER_SIZE / 2                   ; Max number of operands in expression, worst case every other char is operator
 OUTPUT_STACK_SIZE         EQU MAX_OPERATORS + MAX_OPERANDS                 ; Worst case size
-OPERATOR_STACK_SIZE       EQU MAX_OPERATORS
-output_stack              DEFS 12 * OUTPUT_STACK_SIZE                      ; RPN output stack
-operator_stack            DEFS 1 * MAX_OPERATORS                           ; temporary stack before pushed to output stack, 1 byte per operator
-
-expression_length         DEFB 0                                           ; Length of current expression (position of null terminator)
-expression_position       DEFB 0                                           ; Position of cursor from the right
-                          align
+OPERATOR_STACK_SIZE       EQU MAX_OPERATORS                                ; Worst case
 
 CALC_HISTORY_SIZE         EQU 8                                            ; Number of previous results to store in history
-calc_history              DEFS 8 * CALC_HISTORY_SIZE                       ; Circular array of previous results, 64 bit integers
-calc_history_head         DEFB 0                                           ; Head of array, most recent result in history
-calc_history_count        DEFB 0                                           ; Size of array (0 to size-1)
-
-calc_error_code           DEFB 0                                           ; error code, returned by calc.s
-
-; State
-calc_state                defb CALC_IDLE
-                          align
 
 CALC_IDLE                 EQU 0
 CALC_DIGIT                EQU 1
 CALC_OPERATOR             EQU 2
 CALC_RESULT               EQU 3
 
-; Messages
-ERROR_MSG_TABLE           DEFW MSG_OVERFLOW, MSG_DIV_ZERO, MSG_INTERNAL
-MSG_DIV_ZERO              DEFB "Error: Div 0", 0
-MSG_INVALID_CHAR          DEFB "Error: Bad Char", 0
-MSG_OVERFLOW              DEFB "Error: Overflow", 0
-MSG_INTERNAL              DEFB "Error: Internal", 0
-                          align
-
-
-                          sw ra, [sp]
-
-                          li a0, '\f'                                      ; Clear screen on init
-                          call write_char
-
-                          la t0, expression_buffer
-                          sb zero, [t0]                                    ; Null terminate buffer at start
-
-                          la t0, expression_length
-                          sb zero, [t0]                                    ; Set expression length to 0
-
-                          lw ra, [sp]
-                          addi sp, sp, 4
-                          ret
-
-KEY_LOOKUP                defb "*7410852/963@=-+ABCD"
-KEY_LOOKUP_END
-
 KEY_LOOKUP_LENGTH         EQU (KEY_LOOKUP_END - KEY_LOOKUP)                ; Number of valid keys
-                          align
-
 KEY_DIGIT                 EQU 0
 KEY_OPERATOR              EQU 1
 KEY_EQUALS                EQU 2
@@ -83,10 +38,50 @@ KEY_AC                    EQU 3
 KEY_ONBOARD               EQU 4
 KEY_INVALID               EQU -1
 
+; --- Calc Memory ---
+; Note: Memory not packed for better readability.
+
+; Expression Buffer
+expression_buffer         DEFS 64
+expression_length         DEFB 0                                           ; Length of current expression (position of null terminator)
+expression_position       DEFB 0                                           ; Position of cursor from the right
+                          align
+
+; Stacks required for evaluation
+output_stack              DEFS 12 * OUTPUT_STACK_SIZE                      ; RPN output stack
+operator_stack            DEFS 1 * MAX_OPERATORS                           ; temporary stack before pushed to output stack, 1 byte per operator
+                          align
+
+; History
+calc_history              DEFS 8 * CALC_HISTORY_SIZE                       ; Circular array of previous results, 64 bit integers
+calc_history_head         DEFB 0                                           ; Head of array, most recent result in history
+calc_history_count        DEFB 0                                           ; Size of array (0 to size-1)
+
+; State
+calc_state                defb CALC_IDLE
+calc_error_code           DEFB 0                                           ; error code, returned by calc.s
+                          align
+
+; Display Messages
+ERROR_MSG_TABLE           DEFW MSG_OVERFLOW, MSG_DIV_ZERO, MSG_INTERNAL
+MSG_DIV_ZERO              DEFB "Error: Div 0", 0
+MSG_INVALID_CHAR          DEFB "Error: Bad Char", 0
+MSG_OVERFLOW              DEFB "Error: Overflow", 0
+MSG_INTERNAL              DEFB "Error: Internal", 0
+                          align
+
+; Buttons
+KEY_LOOKUP                defb "*7410852/963@=-+ABCD"
+KEY_LOOKUP_END
+                          align
+
+
 ; --- Page Functions ---
 
 ; calc_init
 ; Purpose: Initialise calculator page.
+; Input/Output: None
+; Modifies: t0, a0
 calc_init                 subi sp, sp, 4
                           sw ra, [sp]
 
@@ -105,6 +100,8 @@ calc_init                 subi sp, sp, 4
 ; calc_handler
 ; Purpose: Handle button presses
 ; Input: a0 = button pressed
+; Output: None
+; Modifies: t0, t1
 calc_handler              subi sp, sp, 4
                           sw ra, [sp]
 
@@ -132,6 +129,8 @@ calc_handler_end          lw ra, [sp]
 
 ; calc_render
 ; Purpose: Render expression buffer to screen, at the rightmost 16 columns.
+; Input: None
+; Output: None
 ; Modifies: t0, t1
 calc_render               subi sp, sp, 4                                   ; s0 = pointer to input buffer
                           sw ra, [sp]
@@ -172,7 +171,7 @@ render_result             la t0, calc_history                              ; If 
                           li t2, UINT32_MAX
                           beq a1, t2, _render_decimal                      ; upper == sign-extension
 
-_render_hex               mv t3, a0                                        ; preserve lower
+_render_hex               mv t3, a0                                        ; preserve lower, t3 preserved through calls
                           mv a0, a1                                        ; write upper first
                           li a1, 8                                         ; 8 nibbles
                           call write_hex
@@ -199,6 +198,11 @@ render_end                lw ra, [sp]
 
 
 ; --- States ---
+; Note: for all states
+; Input: a0 = char of button pressed, a1 = type of button pressed
+; Output: None
+
+
 
 ; Idle State
 calc_handler_idle:
@@ -400,10 +404,10 @@ append_expression_end     ret
 
 
 
-
 ; get_key
 ; Input: a0 = digit button pressed
 ; Output: a0 = button char, a1 = type of button pressed
+; Modifies: t0
 get_key_type
                           li t0, KEY_LOOKUP_LENGTH
                           bgeu a0, t0, get_key_invalid                     ; Button index out of bounds

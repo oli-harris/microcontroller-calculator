@@ -15,7 +15,7 @@
 ; Loop unrolled for efficiency
 ; Input: None
 ; Output: None
-; Note: uses return address to store next instruction, to avoid branching and save instructions
+; Note: uses return address to store next instruction, (not conventional, but efficient).
 ; Modifies: a0, a2, t0, t1, t2
 button_scanner:
                       subi sp, sp, 4
@@ -59,7 +59,7 @@ button_scanner_end    lw ra, [sp]
 
 
 ; interrupt_button
-; Note: Debug to reset entire program.
+; Note: Can be used for debugging
 interrupt_button:
                       j .
 

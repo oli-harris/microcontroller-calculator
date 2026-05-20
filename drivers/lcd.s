@@ -1,17 +1,24 @@
-; --- LCD Ecalls ---
+; ------------------------------------------------
+;                   LCD Driver
+;                 Oliver Harris
+; Implements ecall to write data or command to LCD,
+; when it is not busy, using a delay loop whilst
+; waiting (intentionally wastes cycles)
+; 
+; Requires: delay.s
 ; Last modified: 10/03/26
+; ------------------------------------------------
 
 DATA_COMMAND_BIT     EQU 0x100                          ; bit 8
 WRITE_COMMAND        EQU DATA_COMMAND_BIT
 
 
 ; ecall_lcd_write
-; Purpose: Writes data or command to LCD, when not busy
+; Purpose: Writes data or command to LCD
 ; Input: a0 = data to write (bits 0:7)
 ;             0 for data, 1 for command (bit 8)
 ; Output: None
 ; Modifies: a0, a2, t0, t1, t2
-; Requires: delay.s
 ecall_lcd_write:
                      subi sp, sp, 4
                      sw ra, [sp]
